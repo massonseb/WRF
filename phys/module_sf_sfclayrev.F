@@ -292,7 +292,6 @@ CONTAINS
                 INTENT(INOUT)               ::                HFX, &
                                                               QFX, &
                                                          MOL,RMOL, &
-                                                             QSFC, &
                                                               ZNT, &
                                                               ZOL, &
                                                               UST
@@ -306,8 +305,14 @@ CONTAINS
                                                               CPM, &
                                                              CHS2, &
                                                              CQS2, &
-                                                              CHS, &
-                                                              QGH
+                                                              CHS
+
+      REAL,     DIMENSION( ims:ime )                             , &
+                INTENT(INOUT)   ::                      FLHC,FLQC
+
+      REAL,     DIMENSION( ims:ime )                             , &
+                INTENT(INOUT)   ::                                 &
+                                                         QSFC,QGH
 
       REAL,     DIMENSION( ims:ime )                             , &
                 INTENT(OUT)     ::                         REGIME, &
