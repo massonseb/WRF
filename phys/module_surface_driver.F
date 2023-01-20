@@ -1,4 +1,5 @@
 !WRF:MEDIATION_LAYER:PHYSICS
+#define BPRC_MODS
 !
 MODULE module_surface_driver
 CONTAINS
@@ -33,6 +34,11 @@ CONTAINS
      &          ,t_phy,u10,udrunoff,ust,uz0                           &
      &          ,u_frame,u_phy,v10,vegfra,u10e,v10e,uoce,voce         &
      &          ,vz0,v_frame,v_phy,warm_rain,wspd,xice,xland,z,znt    &
+#ifdef BPRC_MODS
+! bai 20141023=========================================================
+                ,landmask,lu_index                                    &
+!======================================================================
+#endif
      &          ,max_edom,cplmask                                     &
 #if (HWRF==1)
      &          ,mznt                                                 &
@@ -623,9 +629,15 @@ CONTAINS
    INTEGER, INTENT(IN)::   SEAICE_SNOWDEPTH_OPT
    REAL,    INTENT(IN)::   SEAICE_SNOWDEPTH_MAX
    REAL,    INTENT(IN)::   SEAICE_SNOWDEPTH_MIN
+#ifdef BPRC_MODS
+   INTEGER, INTENT(INOUT)::   IFNDALBSI               ! bai
+   INTEGER, INTENT(INOUT)::   IFNDICEDEPTH            ! bai
+   INTEGER, INTENT(INOUT)::   IFNDSNOWSI              ! bai
+#else
    INTEGER, INTENT(IN)::   IFNDALBSI
    INTEGER, INTENT(IN)::   IFNDICEDEPTH
    INTEGER, INTENT(IN)::   IFNDSNOWSI
+#endif
    LOGICAL, INTENT(IN)::   do_bioe
    LOGICAL, INTENT(IN)::   do_meganfile
 
@@ -647,6 +659,12 @@ CONTAINS
 
    INTEGER, DIMENSION( ims:ime , jms:jme ), INTENT(INOUT )::  ISLTYP
    INTEGER, DIMENSION( ims:ime , jms:jme ), INTENT(INOUT)::   IVGTYP
+#ifdef BPRC_MODS
+! bai 20141023 =====================================================
+   REAL,        DIMENSION( ims:ime , jms:jme ), INTENT(INOUT )::  LANDMASK
+   REAL,        DIMENSION( ims:ime , jms:jme ), INTENT(INOUT)::   LU_INDEX
+!===================================================================
+#endif
    INTEGER, DIMENSION( ims:ime , jms:jme ), INTENT(IN )::   LOWLYR
    INTEGER, INTENT(IN )::   IFSNOW
    INTEGER, INTENT(IN )::   ISFFLX
@@ -1695,6 +1713,15 @@ CONTAINS
           VEGFRA(I,J) = 0.
           TMN(I,J) = 271.4
 
+#ifdef BPRC_MODS
+! bai  20141023=================================================
+          LANDMASK(I,J)=1.
+          LU_INDEX(I,J)=ISICE
+          ALBBCK(I,J) = SEAICE_ALBEDO_DEFAULT
+          SNOALB(I,J) = SEAICE_ALBEDO_DEFAULT
+!===============================================================
+#endif
+
           ! Over new ice, initial guesses of ALBEDO and EMISS are
           ! based on default water and ice values for albedo and
           ! emissivity.  The land-surface schemes can update these
@@ -1717,8 +1744,12 @@ CONTAINS
 
           END SELECT
 
-          EMISS(I,J)  = 0.98 * XICE(I,J) + 0.98 * ( 1.0-XICE(I,J) )
-          EMBCK(I,J)  = 0.98
+!================================================= bai =========================
+!          EMISS(I,J)  = 0.98 * XICE(I,J) + 0.98 * ( 1.0-XICE(I,J) )
+!          EMBCK(I,J)  = 0.98
+          EMISS(I,J)  = 0.95 * XICE(I,J) + 0.98 * ( 1.0-XICE(I,J) ) ! bai
+          EMBCK(I,J)  = 0.95
+!===============================================================================
           DO nk = 1, num_soil_layers
             TSLB(I,NK,J) = TSK(I,J)
             SMOIS(I,NK,J) = 1.0
@@ -1779,6 +1810,13 @@ CONTAINS
           ALBBCK(I,J) = 0.08
           EMISS(I,J)  = 0.98
           EMBCK(I,J)  = 0.98
+#ifdef BPRC_MODS
+! bai 20141023====================================
+          LANDMASK(I,J)=0.
+          LU_INDEX(I,J)=ISWATER
+          SNOALB(I,J) = 0.08
+! ================================================
+#endif
           DO nk = 1, num_soil_layers
             TSLB(I,NK,J) = SST(I,J)
             SMOIS(I,NK,J) = 1.0
@@ -3151,7 +3189,12 @@ CONTAINS
 	           DZ8W,     DTBL,      DZS,     NUM_SOIL_LAYERS,         DX, &
 		 IVGTYP,   ISLTYP,   VEGFRA,   SHDMAX,       TMN,             &
 		  XLAND,     XICE,     XICE_THRESHOLD,   CROPCAT,             &
-               PLANTING,  HARVEST,SEASON_GDD,                               &
+#ifdef BPRC_MODS
+! bai =========================================================================
+                HT                                                          , &
+!==============================================================================
+#endif
+               PLANTING,  HARVEST,SEASON_GDD,                                 &
                   IDVEG, IOPT_CRS, IOPT_BTR, IOPT_RUN,  IOPT_SFC,   IOPT_FRZ, &
 	       IOPT_INF, IOPT_RAD, IOPT_ALB, IOPT_SNF, IOPT_TBOT,   IOPT_STC, &
 	       IOPT_GLA, IOPT_RSF, IOPT_SOIL,IOPT_PEDO,IOPT_CROP,   IOPT_IRR, &
@@ -7134,6 +7177,9 @@ HFX_SEA, LH_SEA, QFX_SEA, QGH_SEA, QSFC_SEA, TSK_SEA,  &
 ! Local
       INTEGER :: i,j
       REAL    :: TICE_MIN
+#ifdef BPRC_MODS
+      REAL :: SST_old   ! Old Sea Surface Temperature (K)
+#endif
 
       TICE_MIN = 221.4
 
@@ -7146,8 +7192,12 @@ HFX_SEA, LH_SEA, QFX_SEA, QGH_SEA, QSFC_SEA, TSK_SEA,  &
                ENDIF
  
                IF (sfc_layer_values) THEN
-                  IF ( SST(i,j) > 273. .AND. itimestep <= 3) then
-                     ! Why the dependence on the time step count, here?
+#ifdef BPRC_MODS
+                 IF ( SST(i,j) > 273. .AND. itimestep <= 1) then
+#else
+                 IF ( SST(i,j) > 273. .AND. itimestep <= 3) then
+#endif
+                     ! Why the dependence on the time step count, here?????
                      IF ( XICE(i,j) >= 0.6 ) THEN
                         SST(i,j) = 271.4
                      ELSEIF ( XICE(i,j) >= 0.4 ) THEN
@@ -7169,15 +7219,29 @@ HFX_SEA, LH_SEA, QFX_SEA, QGH_SEA, QSFC_SEA, TSK_SEA,  &
 !------------------------------------------------------------------------------------
                   TSK_ICE(i,j) = MIN( TSK(i,j), 273.15 )
                ELSE
+#ifdef BPRC_MODS
+! bugfix very cold initial ice fraction temperature                     kmh 07/05/2014
+                  TSK_ICE(i,j) = ( TSK(i,j) - (1.0-XICE(i,j)) * SST_old ) / XICE(i,j)
+#else
                   TSK_ICE(i,j) = ( TSK(i,j) - (1.0-XICE(i,j)) * SST(i,j) ) / XICE(i,j)
+#endif
                   IF ( TSK_ICE(i,j) < TICE_MIN ) TSK_ICE(i,j) = TICE_MIN
                ENDIF
- 
+#ifdef BPRC_MODS
+! bugfix very cold TSK_ICE                                              kmh 07/05/2014
+               IF ( ( XICE(i,j) < 0.2 ) .AND. ( TSK_ICE(i,j) < 253.15 ) ) THEN
+#else
                IF ( ( XICE(i,j) < 0.2 ) .AND. ( TSK(i,j) < 253.15 ) ) THEN
                   TSK_ICE(i,j) = 253.15
+#endif
                ENDIF
+#ifdef BPRC_MODS
+! bugfix very cold TSK_ICE
+               IF ( ( XICE(i,j) < 0.1 ) .AND. ( TSK_ICE(i,j) < 263.15 ) ) THEN
+#else
                IF ( ( XICE(i,j) < 0.1 ) .AND. ( TSK(i,j) < 263.15 ) ) THEN
-                  TSK_ICE(i,j) = 263.15
+#endif
+                 TSK_ICE(i,j) = 263.15
                ENDIF
             ELSE
                ! land/open-water point

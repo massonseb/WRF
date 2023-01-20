@@ -1,4 +1,7 @@
 MODULE module_sf_noahlsm
+#define BPRC_MODS
+!!#define ORGANIC_TUNDRA
+!!#define ALTERNATE_SFCT
 #if defined(mpas)
 use mpas_atmphys_constants,only: CP=>cp,R_D=>R_d,XLF=>xlf,XLV=>xlv,RHOWATER=>rho_w,STBOLT=>stbolt,KARMAN=>karman
 use mpas_atmphys_utilities, only: physics_error_fatal
@@ -24,7 +27,12 @@ use module_wrf_error
   REAL, PARAMETER      :: RD = 287.04, SIGMA = 5.67E-8,                 &
                           CPH2O = 4.218E+3,CPICE = 2.106E+3,            &
                           LSUBF = 3.335E+5,                             &
-                          EMISSI_S = 0.95
+!!!                          EMISSI_S = 0.95
+#ifdef BPRC_MODS
+                          EMISSI_S = 0.95  ! .98 removed by bai
+#else
+                          EMISSI_S = 0.95  
+#endif
 
 ! VEGETATION PARAMETERS
         INTEGER :: LUCATS , BARE

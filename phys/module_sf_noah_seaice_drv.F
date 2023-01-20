@@ -1,3 +1,4 @@
+!!#define BPRC_MODS
 module module_sf_noah_seaice_drv
 #if defined(mpas)
 use mpas_atmphys_utilities, only: physics_message,physics_error_fatal
@@ -221,6 +222,9 @@ contains
           CASE (0)
               ! Use uniform sea-ice thickness.
               SITHICK = SEAICE_THICKNESS_DEFAULT
+#ifdef BPRC_MODS
+              ICEDEPTH(I,J) = SEAICE_THICKNESS_DEFAULT
+#endif
           CASE (1)
               ! Use the sea-ice as read in from the input files.
               ! Limit the to between 0.10 and 10.0 m.

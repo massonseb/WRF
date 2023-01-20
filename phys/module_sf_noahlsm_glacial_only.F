@@ -1,3 +1,5 @@
+#define BPRC_MODS
+!!#define ICEZO_SMALL
 MODULE module_sf_noahlsm_glacial_only
 #if defined(mpas)
 use mpas_atmphys_constants
@@ -62,6 +64,9 @@ CONTAINS
 !  S  SURFACE CHARACTERISTICS
 !  H  HISTORY (STATE) VARIABLES
 !  O  OUTPUT VARIABLES
+!!#ifdefine BPRC_MODS
+!  K  BPRC MODS
+!!#endif
 !  D  DIAGNOSTIC OUTPUT
 ! ----------------------------------------------------------------------
 ! 1. CONFIGURATION INFORMATION (C):
@@ -270,11 +275,17 @@ CONTAINS
 ! kmh 09/04/2006 set Snow Density at 0.2 g/cm**3
 ! for "cold permanent ice" or new "dry" snow
 ! if soil temperature less than 268.15 K, treat as typical 
-! Antarctic/Greenland snow firn
+! Antarctic/Greenland snow firn ??? bai 
 ! ----------------------------------------------------------------------
        IF ( SNCOVR .GT. 0.99 ) THEN
           IF ( STC(1) .LT. (TFREEZ - 5.) ) SNDENS = 0.2
-          IF ( SNOWNG .AND. (T1.LT.273.) .AND. (SFCTMP.LT.273.) ) SNDENS=0.2
+#ifdef BPRC_MODS
+
+          ! SNDENS = 0.35 ? it is only for Antarctic and Greenland? bai 
+
+          SNDENS = 0.35   ! Inspired by Yen (1981) Antarctic snow density
+#endif
+         IF ( SNOWNG .AND. (T1.LT.273.) .AND. (SFCTMP.LT.273.) ) SNDENS=0.2
        ENDIF
 
        CALL CSNOW (SNCOND,SNDENS)
@@ -323,9 +334,15 @@ CONTAINS
 ! OF SURFACE MEDIUMS, DF1 ABOVE, AND SKIN TEMPERATURE AND TOP
 ! MID-LAYER SOIL TEMPERATURE
 ! ----------------------------------------------------------------------
+#ifdef BPRC_MODS
+    IF ( DTOT .GT. 4.*DSOIL ) then
+       DTOT = 4.*DSOIL
+    ENDIF
+#else
     IF ( DTOT .GT. 2.*DSOIL ) then
        DTOT = 2.*DSOIL
     ENDIF
+#endif
     SSOIL = DF1 * ( T1 - STC(1) ) / DTOT
 
 ! ----------------------------------------------------------------------
@@ -994,9 +1011,15 @@ CONTAINS
 ! UPDATE SOIL HEAT FLUX (S) USING NEW SKIN TEMPERATURE (T1)
 ! ----------------------------------------------------------------------
        T1 = TFREEZ
+#ifdef BPRC_MODS
+       IF ( DTOT .GT. 4.*DSOIL ) then
+          DTOT = 4.*DSOIL
+       ENDIF
+#else
        IF ( DTOT .GT. 2.0*DSOIL ) THEN
           DTOT = 2.0*DSOIL
        ENDIF
+#endif
        SSOIL = DF1 * (T1- STC (1)) / DTOT
        IF (SNEQV-ESNOW2 <= ESDMIN) THEN
           SNEQV = 0.0
@@ -1068,6 +1091,10 @@ CONTAINS
        SNOWH = 0.50
 !KWM???? SNDENS =
 !KWM???? SNCOND =
+#ifdef BPRC_MODS
+       SNDENS = 0.35   ! Inspired by Yen (1981) Antarctic snow density
+       SNOWH = SNEQV / SNDENS
+#endif
     ENDIF
 ! ----------------------------------------------------------------------
   END SUBROUTINE SNOPAC

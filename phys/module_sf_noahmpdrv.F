@@ -1,4 +1,5 @@
 MODULE module_sf_noahmpdrv
+#define BPRC_MODS
 
 !-------------------------------
 #if ( WRF_CHEM == 1 )
@@ -13,6 +14,9 @@ CONTAINS
                   DZ8W,       DT,       DZS,    NSOIL,       DX,            & ! IN : Model configuration 
 	        IVGTYP,   ISLTYP,    VEGFRA,   VEGMAX,      TMN,            & ! IN : Vegetation/Soil characteristics
 		 XLAND,     XICE,XICE_THRES,  CROPCAT,                      & ! IN : Vegetation/Soil characteristics
+! bai =========================================================================
+                HT                                                        , & ! IN : terrain height
+!==============================================================================
 	       PLANTING,  HARVEST,SEASON_GDD,                               &
                  IDVEG, IOPT_CRS,  IOPT_BTR, IOPT_RUN, IOPT_SFC, IOPT_FRZ,  & ! IN : User options
               IOPT_INF, IOPT_RAD,  IOPT_ALB, IOPT_SNF,IOPT_TBOT, IOPT_STC,  & ! IN : User options
@@ -92,6 +96,9 @@ CONTAINS
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(IN   ) ::  TMN       ! deep soil temperature [K]
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(IN   ) ::  XLAND     ! =2 ocean; =1 land/seaice
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(IN   ) ::  XICE      ! fraction of grid that is seaice
+! bai ============================================================================
+    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(IN   ) ::  HT        ! terrain height               
+!==================================================================================
     REAL,                                            INTENT(IN   ) ::  XICE_THRES! fraction of grid determining seaice
     INTEGER,                                         INTENT(IN   ) ::  IDVEG     ! dynamic vegetation (1 -> off ; 2 -> on) with opt_crs = 1      
     INTEGER,                                         INTENT(IN   ) ::  IOPT_CRS  ! canopy stomatal resistance (1-> Ball-Berry; 2->Jarvis)
@@ -348,6 +355,13 @@ CONTAINS
     REAL                                :: LWDN         ! longwave down at surface [W m-2]
     REAL                                :: P_ML         ! pressure, valid at interface [Pa]
     REAL                                :: PSFC         ! surface pressure [Pa]
+#ifdef BPRC_MODS
+! bai =========================================================================
+    REAL                                :: HT_GLACIER   ! terrain height
+    REAL                                :: ALB_LAT      ! albedo limitation latitude
+    REAL                                :: ALB_LONG     ! albedo limitation latitude
+!==============================================================================
+#endif
     REAL                                :: PRCP         ! total precipitation entering  [mm]         ! MB/AN : v3.7
     REAL                                :: PRCPCONV     ! convective precipitation entering  [mm]    ! MB/AN : v3.7
     REAL                                :: PRCPNONC     ! non-convective precipitation entering [mm] ! MB/AN : v3.7
@@ -556,7 +570,9 @@ CONTAINS
                     TSLB(I,K,J) = 273.16
                 ENDDO
              ELSE
-                IF(XICE(I,J) == 1.) THEN        ! Sea-ice case
+! bai ==========================================================================
+               IF(XICE(I,J) == 1.) THEN        ! Sea-ice case
+! ===========================????===============================================
                    SMSTAV(I,J) = 1.0
                    SMSTOT(I,J) = 1.0
                    DO K = 1, NSOIL
@@ -576,6 +592,9 @@ CONTAINS
 
        SH2O  (i,1:NSOIL,j) = 1.0
        XLAIXY(i,j)         = 0.01
+! bai ===========================
+       XLAIXY(i,j)         = 0.0
+!================================
 
        CYCLE ILOOP ! Skip any processing at sea-ice points
 
@@ -614,6 +633,14 @@ CONTAINS
 	                                              !    consistent with temperature, mixing ratio
        PSFC   = P8W3D(I,1,J)                          ! surface pressure defined a full levels [Pa]
        PRCP   = PRECIP_IN (I,J) / DT                  ! timestep total precip rate (glacier) [mm/s]! MB: v3.7
+
+#ifdef BPRC_MODS
+! bai =========================================================================
+       HT_GLACIER = HT(I,J)
+       ALB_LAT    = XLAT(I,J)
+       ALB_LONG   = XLONG(I,J)
+!==============================================================================
+#endif
 
        CROPTYPE = 0
        IF (IOPT_CROP > 0 .AND. VEGTYP == ISCROP_TABLE) CROPTYPE = DEFAULT_CROP_TABLE ! default croptype is generic dynamic vegetation crop
@@ -858,7 +885,10 @@ CONTAINS
        IF(VEGTYP == 27) FVEG = 0.0
        IF(VEGTYP == 27) PLAI = 0.0
 
-       IF ( VEGTYP == ISICE_TABLE ) THEN
+! bai =========================================================
+!       IF ( VEGTYP == ISICE_TABLE ) THEN
+       IF(IVGTYP(I,J)==ISICE_TABLE .AND. XICE(I,J) <= 0.0) THEN
+!==============================================================
          ICE = -1                           ! Land-ice point
          CALL NOAHMP_OPTIONS_GLACIER(IOPT_ALB  ,IOPT_SNF  ,IOPT_TBOT, IOPT_STC, IOPT_GLA )
       
@@ -872,7 +902,10 @@ CONTAINS
                                 FSA,     FSR,    FIRA,     FSH,    FGEV,   SSOIL, & ! OUT : 
                                TRAD,   ESOIL,   RUNSF,   RUNSB,     SAG,    SALB, & ! OUT :
                               QSNBOT,PONDING,PONDING1,PONDING2,    T2MB,    Q2MB, & ! OUT :
-			      EMISSI,  FPICE,    CHB2 &                             ! OUT :
+			      EMISSI,  FPICE,    CHB2,                            & ! OUT :
+! bai ==========================================================================
+                              PSFC, HT_GLACIER,ALB_LAT ,ALB_LONG                  &
+! ==============================================================================
 #ifdef WRF_HYDRO
                               , sfcheadrt(i,j)                                      &
 #endif
@@ -1647,6 +1680,10 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
     REAL,    DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: irfivol
     REAL,    DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: irrsplh
 
+#ifdef BPRC_MODS
+!!!    REAL, DIMENSION(ims:ime,jms:jme), INTENT(IN)               :: HT          !terrain height (m)
+#endif
+
 ! IOPT_RUN = 5 option
 
     REAL, DIMENSION(ims:ime,1:nsoil,jms:jme), INTENT(INOUT) , OPTIONAL :: smoiseq !equilibrium soil moisture content [m3m-3]
@@ -1726,7 +1763,7 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
        ENDIF
 
 
-       ! Check if snow/snowh are consistent and cap SWE at 5000mm;
+       ! Check if snow/snowh are consistent and cap SWE at 2000mm;
        !  the Noah-MP code does it internally but if we don't do it here, problems ensue
        DO J = jts,jtf
           DO I = its,itf
@@ -1735,9 +1772,9 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
                                      ,i,j,snow(i,j),snowh(i,j)
                CALL wrf_message(err_message)
              ENDIF
-             IF ( SNOW( i,j ) > 5000. ) THEN
-               SNOWH(I,J) = SNOWH(I,J) * 5000. / SNOW(I,J)      ! SNOW in mm and SNOWH in m
-               SNOW (I,J) = 5000.                               ! cap SNOW at 5000, maintain density
+             IF ( SNOW( i,j ) > 2000. ) THEN
+               SNOWH(I,J) = SNOWH(I,J) * 2000. / SNOW(I,J)      ! SNOW in mm and SNOWH in m
+               SNOW (I,J) = 2000.                               ! cap SNOW at 2000, maintain density
              ENDIF
           ENDDO
        ENDDO
@@ -1775,6 +1812,10 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
 	    IF(IVGTYP(I,J)==ISICE_TABLE .AND. XICE(I,J) <= 0.0) THEN
               DO NS=1, NSOIL
 	        SMOIS(I,NS,J) = 1.0                     ! glacier starts all frozen
+! bai =========================???====================================================
+!	        SH2O(I,NS,J) = 0.0   ! ???
+!	        SH2O(I,NS,J) = 1.0
+! =============================???====================================================
 	        SH2O(I,NS,J) = 0.0
 	        TSLB(I,NS,J) = MIN(TSLB(I,NS,J),263.15) ! set glacier temp to at most -10C
               END DO
