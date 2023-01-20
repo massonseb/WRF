@@ -3075,6 +3075,9 @@ integer::oops1,oops2
       CALL adjust_for_seaice_pre ( grid%xice , grid%landmask , grid%tsk , grid%ivgtyp , grid%vegcat , grid%lu_index , &
                                    grid%xland , grid%landusef , grid%isltyp , grid%soilcat , grid%soilctop , &
                                    grid%soilcbot , grid%tmn , &
+! bai ========================================================================20151013
+                                   grid%icedepth , grid%snowsi , grid%albsi, & 
+! ================================================================================
                                    grid%seaice_threshold , &
                                    config_flags%fractional_seaice, &
                                    num_veg_cat , num_soil_top_cat , num_soil_bot_cat , &
@@ -3457,6 +3460,9 @@ integer::oops1,oops2
                                     model_config_rec%num_soil_layers , &
                                     grid%iswater , grid%isice , &
                                     model_config_rec%sf_surface_physics(grid%id) , &
+! bai ========================================================================20151013
+                                    grid%icedepth , grid%snowsi , grid%albsi, & 
+! ================================================================================
                                     ids , ide , jds , jde , kds , kde , &
                                     ims , ime , jms , jme , kms , kme , &
                                     its , ite , jts , jte , kts , kte )

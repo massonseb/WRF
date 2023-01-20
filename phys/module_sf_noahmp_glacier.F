@@ -1,4 +1,5 @@
 MODULE NOAHMP_GLACIER_GLOBALS
+#define BPRC_MODS
 
   implicit none
 
@@ -18,7 +19,8 @@ MODULE NOAHMP_GLACIER_GLOBALS
   REAL, PARAMETER :: CICE   = 2.094E06  !specific heat capacity of ice (j/m3/k)
   REAL, PARAMETER :: CPAIR  = 1004.64   !heat capacity dry air at const pres (j/kg/k)
   REAL, PARAMETER :: TKWAT  = 0.6       !thermal conductivity of water (w/m/k)
-  REAL, PARAMETER :: TKICE  = 2.2       !thermal conductivity of ice (w/m/k)
+!  REAL, PARAMETER :: TKICE  = 2.2       !thermal conductivity of ice (w/m/k) bai ====
+  REAL, PARAMETER :: TKICE  = 3.2       !thermal conductivity of ice (w/m/k)
   REAL, PARAMETER :: TKAIR  = 0.023     !thermal conductivity of air (w/m/k)
   REAL, PARAMETER :: RAIR   = 287.04    !gas constant for dry air (j/kg/k)
   REAL, PARAMETER :: RW     = 461.269   !gas constant for  water vapor (j/kg/k)
@@ -112,7 +114,10 @@ contains
                    FSA     ,FSR     ,FIRA    ,FSH     ,FGEV    ,SSOIL   , & ! OUT : 
                    TRAD    ,EDIR    ,RUNSRF  ,RUNSUB  ,SAG     ,ALBEDO  , & ! OUT :
                    QSNBOT  ,PONDING ,PONDING1,PONDING2,T2M     ,Q2E     , & ! OUT :
-                   EMISSI,  FPICE,    CH2B                                & ! OUT :
+                   EMISSI,  FPICE,    CH2B,                               & ! OUT :
+! bai ==========================================================================
+                   PSFC, HT_GLACIER ,ALB_LAT ,ALB_LONG                    &
+! ==============================================================================
 #ifdef WRF_HYDRO
                    , sfcheadrt                                            &
 #endif
@@ -144,6 +149,12 @@ contains
   REAL, DIMENSION(-NSNOW+1:    0), INTENT(IN)    :: FICEOLD!ice fraction at last timestep
   REAL, DIMENSION(       1:NSOIL), INTENT(IN)    :: ZSOIL  !layer-bottom depth from soil surf (m)
 
+! bai ==========================================================================
+  REAL                           , INTENT(IN)    :: PSFC       !surface pressure
+  REAL                           , INTENT(IN)    :: HT_GLACIER !glacier height
+  REAL                           , INTENT(IN)    :: ALB_LAT    !albedo limitation latitude
+  REAL                           , INTENT(IN)    :: ALB_LONG   !albedo limitation longitude
+! ==============================================================================
 #ifdef WRF_HYDRO
   REAL                           , INTENT(INOUT)    :: sfcheadrt
 #endif
@@ -240,6 +251,9 @@ contains
                          EAIR   ,SFCPRS ,QAIR   ,SFCTMP ,LWDN   ,UU     , & !in
                          VV     ,SOLAD  ,SOLAI  ,COSZ   ,ZLVL   ,         & !in
                          TBOT   ,ZBOT   ,ZSNSO  ,DZSNSO ,                 & !in
+! bai ==========================================================================
+                         PSFC   ,HT_GLACIER     ,ALB_LAT,ALB_LONG       , & ! BAI
+!===============================================================================
                          TG     ,STC    ,SNOWH  ,SNEQV  ,SNEQVO ,SH2O   , & !inout
                          SMC    ,SNICE  ,SNLIQ  ,ALBOLD ,CM     ,CH     , & !inout
                          TAUSS  ,QSFC   ,                                 & !inout
@@ -353,6 +367,9 @@ contains
                              EAIR   ,SFCPRS ,QAIR   ,SFCTMP ,LWDN   ,UU     , & !in
                              VV     ,SOLAD  ,SOLAI  ,COSZ   ,ZREF   ,         & !in
                              TBOT   ,ZBOT   ,ZSNSO  ,DZSNSO ,                 & !in
+! bai ==========================================================================
+                             PSFC   ,HT_GLACIER     ,ALB_LAT,ALB_LONG       , & !in 
+!===============================================================================
                              TG     ,STC    ,SNOWH  ,SNEQV  ,SNEQVO ,SH2O   , & !inout
                              SMC    ,SNICE  ,SNLIQ  ,ALBOLD ,CM     ,CH     , & !inout
                              TAUSS  ,QSFC   ,                                 & !inout
@@ -389,7 +406,12 @@ contains
   REAL                              , INTENT(IN)    :: ZBOT   !depth for TBOT [m]
   REAL   , DIMENSION(-NSNOW+1:NSOIL), INTENT(IN)    :: ZSNSO  !layer-bottom depth from snow surf [m]
   REAL   , DIMENSION(-NSNOW+1:NSOIL), INTENT(IN)    :: DZSNSO !depth of snow & soil layer-bottom [m]
-
+! bai ==========================================================================
+  REAL                              , INTENT(IN)    :: PSFC         !surface pressure
+  REAL                              , INTENT(IN)    :: HT_GLACIER   !surface pressure
+  REAL                              , INTENT(IN)    :: ALB_LAT      !albedo limitation latitude
+  REAL                              , INTENT(IN)    :: ALB_LONG     !albedo limitation longitude
+!===============================================================================
 ! input & output
   REAL                              , INTENT(INOUT) :: TG     !ground temperature (k)
   REAL   , DIMENSION(-NSNOW+1:NSOIL), INTENT(INOUT) :: STC    !snow/soil temperature [k]
@@ -466,6 +488,9 @@ contains
 
   CALL  RADIATION_GLACIER (DT      ,TG      ,SNEQVO  ,SNEQV   ,COSZ    , & !in
                            QSNOW   ,SOLAD   ,SOLAI   ,                   & !in
+! bai ===========================================================================
+                           PSFC    ,HT_GLACIER       ,ALB_LAT ,ALB_LONG, & !in
+!================================================================================ 
                            ALBOLD  ,TAUSS   ,                            & !inout
                            SAG     ,FSR     ,FSA)                          !out
 
@@ -645,16 +670,16 @@ contains
   DO IZ = ISNOW+1, 0
       BDSNOI(IZ) = (SNICE(IZ)+SNLIQ(IZ))/DZSNSO(IZ)
       CVSNO(IZ) = CICE*SNICEV(IZ)+CWAT*SNLIQV(IZ)
-!      CVSNO(IZ) = 0.525E06                          ! constant
+      CVSNO(IZ) = 0.825E06 !0.525E06                          ! constant bai ===
   enddo
 
 ! thermal conductivity of snow
 
   DO IZ = ISNOW+1, 0
-     TKSNO(IZ) = 3.2217E-6*BDSNOI(IZ)**2.           ! Stieglitz(yen,1965)
+!     TKSNO(IZ) = 3.2217E-6*BDSNOI(IZ)**2.           ! Stieglitz(yen,1965) 0
 !    TKSNO(IZ) = 2E-2+2.5E-6*BDSNOI(IZ)*BDSNOI(IZ)   ! Anderson, 1976
-!    TKSNO(IZ) = 0.35                                ! constant
-!    TKSNO(IZ) = 2.576E-6*BDSNOI(IZ)**2. + 0.074    ! Verseghy (1991)
+     TKSNO(IZ) = 0.7 !0.35                                ! constant
+!     TKSNO(IZ) = 2.576E-6*BDSNOI(IZ)**2. + 0.074    ! Verseghy (1991) 1 bai ===
 !    TKSNO(IZ) = 2.22*(BDSNOI(IZ)/1000.)**1.88      ! Douvill(Yen, 1981)
   ENDDO
 
@@ -662,6 +687,9 @@ contains
 !===================================================================================================
   SUBROUTINE RADIATION_GLACIER (DT      ,TG      ,SNEQVO  ,SNEQV   ,COSZ    , & !in
                                 QSNOW   ,SOLAD   ,SOLAI   ,                   & !in
+! bai ===========================================================================
+                                PSFC    ,HT_GLACIER       ,ALB_LAT ,ALB_LONG, & !in
+!================================================================================ 
                                 ALBOLD  ,TAUSS   ,                            & !inout
                                 SAG     ,FSR     ,FSA)                          !out
 ! --------------------------------------------------------------------------------------------------
@@ -697,6 +725,12 @@ contains
   REAL                                 :: REF    !temporary reflected rad
   REAL                                 :: FSNO   !snow-cover fraction, = 1 if any snow
   REAL, DIMENSION(1:2)                 :: ALBICE !albedo land ice: 1=vis, 2=nir
+! bai ===========================================================================
+  REAL                                 :: PSFC          !surface pressure
+  REAL                                 :: HT_GLACIER    !glacier height
+  REAL                                 :: ALB_LAT       !albedo limitation latitude
+  REAL                                 :: ALB_LONG	!albedo limitation longitude
+!================================================================================ 
 
   REAL,PARAMETER :: MPE = 1.E-6
 
@@ -714,13 +748,23 @@ contains
 
 ! snow albedos: age even when sun is not present
 
+#ifdef BPRC_MODS
+! bai =========================================================================
+  IF(OPT_ALB == 1) &
+     CALL SNOWALB_BATS_GLACIER (NBAND,COSZ,FAGE,ALBSND,ALBSNI,PSFC,HT_GLACIER,ALB_LAT,ALB_LONG)
+  IF(OPT_ALB == 2) THEN
+     CALL SNOWALB_CLASS_GLACIER(NBAND,QSNOW,DT,ALB,ALBOLD,ALBSND,ALBSNI,PSFC,HT_GLACIER,ALB_LAT,ALB_LONG)
+     ALBOLD = ALB
+  END IF
+!==============================================================================
+#else
   IF(OPT_ALB == 1) &
      CALL SNOWALB_BATS_GLACIER (NBAND,COSZ,FAGE,ALBSND,ALBSNI)
   IF(OPT_ALB == 2) THEN
      CALL SNOWALB_CLASS_GLACIER(NBAND,QSNOW,DT,ALB,ALBOLD,ALBSND,ALBSNI)
      ALBOLD = ALB
   END IF
-
+#endif
 ! zero summed solar fluxes
 
    SAG = 0.
@@ -802,6 +846,67 @@ contains
    FAGE= TAUSS/(TAUSS+1.)
 
   END SUBROUTINE SNOW_AGE_GLACIER
+#ifdef BPRC_MODS
+! bai ==============================================================================================
+! --------------------------------------------------------------------------------------------------
+  SUBROUTINE SNOWALB_BATS_GLACIER (NBAND,COSZ,FAGE,ALBSND,ALBSNI,PSFC,HT_GLACIER,ALB_LAT,ALB_LONG)
+! --------------------------------------------------------------------------------------------------
+  IMPLICIT NONE
+! --------------------------------------------------------------------------------------------------
+! input
+
+  INTEGER,INTENT(IN) :: NBAND  !number of waveband classes
+
+  REAL,INTENT(IN) :: COSZ    !cosine solar zenith angle
+  REAL,INTENT(IN) :: FAGE    !snow age correction
+
+! bai ==========================================================================
+  REAL,INTENT(IN) :: PSFC       !surface pressure
+  REAL,INTENT(IN) :: HT_GLACIER !glacier height
+  REAL,INTENT(IN) :: ALB_LAT    !albedo limitation latitude
+  REAL,INTENT(IN) :: ALB_LONG   !albedo limitation longitude
+  
+  REAL            :: HT_HIGH
+  REAL            :: HT_LOW
+! ==============================================================================
+
+! output
+
+  REAL, DIMENSION(1:2),INTENT(OUT) :: ALBSND !snow albedo for direct(1=vis, 2=nir)
+  REAL, DIMENSION(1:2),INTENT(OUT) :: ALBSNI !snow albedo for diffuse
+! ---------------------------------------------------------------------------------------------
+
+  REAL :: FZEN                 !zenith angle correction
+  REAL :: CF1                  !temperary variable
+  REAL :: SL2                  !2.*SL
+  REAL :: SL1                  !1/SL
+  REAL :: SL                   !adjustable parameter
+  REAL, PARAMETER :: C1 = 0.2  !default in BATS 
+  REAL, PARAMETER :: C2 = 0.5  !default in BATS
+!  REAL, PARAMETER :: C1 = 0.2 * 2. ! double the default to match Sleepers River's
+!  REAL, PARAMETER :: C2 = 0.5 * 2. ! snow surface albedo (double aging effects)
+! ---------------------------------------------------------------------------------------------
+! zero albedos for all points
+
+        ALBSND(1: NBAND) = 0.
+        ALBSNI(1: NBAND) = 0.
+
+! when cosz > 0
+
+        SL=2.0
+        SL1=1./SL
+        SL2=2.*SL
+        CF1=((1.+SL1)/(1.+SL2*COSZ)-SL1)
+        FZEN=AMAX1(CF1,0.)
+
+        ALBSNI(1)=0.95*(1.-C1*FAGE)         
+        ALBSNI(2)=0.65*(1.-C2*FAGE)        
+
+        ALBSND(1)=ALBSNI(1)+0.4*FZEN*(1.-ALBSNI(1))    !  vis direct
+        ALBSND(2)=ALBSNI(2)+0.4*FZEN*(1.-ALBSNI(2))    !  nir direct
+
+  END SUBROUTINE SNOWALB_BATS_GLACIER
+#else
 ! ==================================================================================================
 ! --------------------------------------------------------------------------------------------------
   SUBROUTINE SNOWALB_BATS_GLACIER (NBAND,COSZ,FAGE,ALBSND,ALBSNI)
@@ -851,8 +956,143 @@ contains
         ALBSND(2)=ALBSNI(2)+0.4*FZEN*(1.-ALBSNI(2))    !  nir direct
 
   END SUBROUTINE SNOWALB_BATS_GLACIER
+#endif
 ! ==================================================================================================
 ! --------------------------------------------------------------------------------------------------
+#ifdef BPRC_MODS
+
+! bai ==============================================================================================
+  SUBROUTINE SNOWALB_CLASS_GLACIER (NBAND,QSNOW,DT,ALB,ALBOLD,ALBSND,ALBSNI,PSFC,HT_GLACIER,ALB_LAT,ALB_LONG)
+! --------------------------------------------------------------------------------------------------
+  IMPLICIT NONE
+! --------------------------------------------------------------------------------------------------
+! input
+
+  INTEGER,INTENT(IN) :: NBAND  !number of waveband classes
+
+  REAL,INTENT(IN) :: QSNOW     !snowfall (mm/s)
+  REAL,INTENT(IN) :: DT        !time step (sec)
+  REAL,INTENT(IN) :: ALBOLD    !snow albedo at last time step
+
+! bai ==========================================================================
+  REAL,INTENT(IN) :: PSFC       !surface pressure
+  REAL,INTENT(IN) :: HT_GLACIER !glacier height
+  REAL,INTENT(IN) :: ALB_LAT    !albedo limitation latitude
+  REAL,INTENT(IN) :: ALB_LONG   !albedo limitation longitude
+
+  REAL            :: LONG360    !albedo limitation longitude
+  REAL            :: HT_HIGH
+  REAL            :: HT_LOW
+  REAL            :: ALB_MAX
+  REAL            :: ALB_MIN
+  REAL            :: LAT_MIN
+
+  REAL            :: LAT_1
+  REAL            :: LAT_2
+  REAL            :: LONG_1 
+  REAL            :: LONG_2 
+! ==============================================================================
+
+! in & out
+
+  REAL,                INTENT(INOUT) :: ALB        ! 
+! output
+
+  REAL, DIMENSION(1:2),INTENT(OUT) :: ALBSND !snow albedo for direct(1=vis, 2=nir)
+  REAL, DIMENSION(1:2),INTENT(OUT) :: ALBSNI !snow albedo for diffuse
+! ---------------------------------------------------------------------------------------------
+
+! ---------------------------------------------------------------------------------------------
+! zero albedos for all points
+
+        ALBSND(1: NBAND) = 0.
+        ALBSNI(1: NBAND) = 0.
+
+! when cosz > 0
+
+!        ALB = 0.55 + (ALBOLD-0.55) * EXP(-0.01*DT/3600.)
+         ALB = 0.50 + (ALBOLD-0.50) * EXP(-0.01*DT/3600.)
+
+! 1 mm fresh snow(SWE) -- 10mm snow depth, assumed the fresh snow density 100kg/m3
+! here assume 1cm snow depth will fully cover the old snow
+
+         IF (QSNOW > 0.) then
+           ALB = ALB + MIN(QSNOW*DT,SWEMX) * (0.82-ALB)/(SWEMX)
+!          ALB = ALB + MIN(QSNOW*DT,SWEMX) * (0.90-ALB)/(SWEMX)
+         ENDIF
+
+         ALBSNI(1)= ALB         ! vis diffuse
+         ALBSNI(2)= ALB         ! nir diffuse
+         ALBSND(1)= ALB         ! vis direct
+         ALBSND(2)= ALB         ! nir direct
+
+! bai ==========================================================================
+
+         LONG360 = ALB_LONG
+         IF(ALB_LONG.LT.0) LONG360 = ALB_LONG + 360.0
+
+         ALB_MAX =   0.8
+         ALB_MIN =   0.6
+         HT_HIGH = 500.0
+         HT_LOW  = 500.0
+
+! Ice sheet is above HT_HIGH
+
+         IF (HT_GLACIER.GT.HT_HIGH.AND.ALB.LT.ALB_MAX) THEN
+             ALB = ALB_MAX
+         ENDIF
+! 
+         IF (HT_GLACIER.LE.HT_HIGH.AND.ALB.LT.ALB_MIN) THEN
+!            ALB = ALB_MIN
+         ENDIF
+
+!  Ronne ice shelf
+
+         LAT_1  = -75.0
+         LAT_2  = -90.0
+         LONG_1 = 360.0 - 90.0
+         LONG_2 = 360.0 - 15.0
+
+         IF (ALB.LT.ALB_MAX.AND.                           &
+             ALB_LAT.LT.LAT_1.AND.ALB_LAT.GT.LAT_2.AND.    &
+             LONG360.LT.LONG_2.AND.LONG360.GT.LONG_1) THEN
+             ALB = ALB_MAX
+         ENDIF
+
+!  Ross ice shelf
+
+         LAT_1  = -76.0
+         LAT_2  = -90.0
+         LONG_1 = 150.0
+         LONG_2 = 360.0 - 135.0
+
+         IF (ALB.LT.ALB_MAX.AND.                           &
+             ALB_LAT.LT.LAT_1.AND.ALB_LAT.GT.LAT_2.AND.    &
+             LONG360.LT.LONG_2.AND.LONG360.GT.LONG_1) THEN
+             ALB = ALB_MAX
+         ENDIF
+
+!  Amery ice shelf
+
+         LAT_1  = -68.0
+         LAT_2  = -75.0
+         LONG_1 =  62.0
+         LONG_2 =  76.0
+
+!!!      IF (HT_GLACIER.LE.500.0.AND.ALB.LT.ALB_MAX.AND.   &
+         IF (ALB.LT.ALB_MAX.AND.                           &
+             ALB_LAT.LT.LAT_1.AND.ALB_LAT.GT.LAT_2.AND.    &
+             LONG360.LT.LONG_2.AND.LONG360.GT.LONG_1) THEN
+             ALB = ALB_MAX
+         ENDIF
+
+         ALBSNI(1)= ALB         ! vis diffuse
+         ALBSNI(2)= ALB         ! nir diffuse
+         ALBSND(1)= ALB         ! vis direct
+         ALBSND(2)= ALB         ! nir direct
+! ==============================================================================
+ END SUBROUTINE SNOWALB_CLASS_GLACIER
+#else
   SUBROUTINE SNOWALB_CLASS_GLACIER (NBAND,QSNOW,DT,ALB,ALBOLD,ALBSND,ALBSNI)
 ! --------------------------------------------------------------------------------------------------
   IMPLICIT NONE
@@ -896,7 +1136,8 @@ contains
          ALBSND(1)= ALB         ! vis direct
          ALBSND(2)= ALB         ! nir direct
 
-  END SUBROUTINE SNOWALB_CLASS_GLACIER
+ END SUBROUTINE SNOWALB_CLASS_GLACIER
+#endif
 ! ==================================================================================================
   SUBROUTINE GLACIER_FLUX (NSOIL   ,NSNOW   ,EMG     ,ISNOW   ,DF      ,DZSNSO  ,Z0M     , & !in
                            ZLVL    ,ZPD     ,QAIR    ,SFCTMP  ,RHOAIR  ,SFCPRS  , & !in
@@ -2255,9 +2496,9 @@ END IF   ! OPT_GLA == 1
 
 !to obtain equilibrium state of snow in glacier region
        
-   IF(SNEQV > 2000.) THEN   ! 2000 mm -> maximum water depth
+   IF(SNEQV > 5000.) THEN   ! 5000 mm -> maximum water depth
       BDSNOW      = SNICE(0) / DZSNSO(0)
-      SNOFLOW     = (SNEQV - 2000.)
+      SNOFLOW     = (SNEQV - 5000.)
       SNICE(0)    = SNICE(0)  - SNOFLOW 
       DZSNSO(0)   = DZSNSO(0) - SNOFLOW/BDSNOW
       SNOFLOW     = SNOFLOW / DT

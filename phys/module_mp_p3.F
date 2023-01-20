@@ -1,4 +1,6 @@
 !__________________________________________________________________________________________
+!!#define CASSANO_DROPLET_REDUCE
+#define VIGNON_ICE_PHYSICS
 ! This module contains the Predicted Particle Property (P3) bulk microphysics scheme.      !
 !                                                                                          !
 ! This code was originally written by H. Morrison, MMM Division, NCAR (Dec 2012).          !
@@ -207,7 +209,12 @@
  iparam = 3
 
 ! droplet concentration (m-3)
+#ifdef CASSANO_DROPLET_REDUCE
+! modification for more pristine Arctic clouds from RASM - taken from Polar WRF' Morrison scheme
+ nccnst = 100.e+6
+#else
  nccnst = 200.e+6
+#endif
 
 ! parameters for Seifert and Beheng (2001) autoconversion/accretion
  kc     = 9.44e+9
@@ -2900,7 +2907,14 @@ END subroutine p3_init
 
 !           Q_nuc = cons6*cdist1(i,k)*gamma(7.+mu_c(i,k))*exp(aimm*(273.15-t(i,k)))*dum**2
 !           N_nuc = cons5*cdist1(i,k)*gamma(mu_c(i,k)+4.)*exp(aimm*(273.15-t(i,k)))*dum
+#ifdef VIGNON_ICE_PHYSICS
+! remove immersion freezing of cloud water (contact freezing already not included in P3)
+! immersion freezing of rain water is allowed
+! based upon ice physics to the Morrison scheme by Vignon et al. (2021, JAS) using IFN observations over the Southern Ocean by McCluskey et al. (2018, GRL)
+          tmp1  = 0.0
+#else
           tmp1 = cdist1(i,k)*exp(aimm*(273.15-t(i,k)))
+#endif
           Q_nuc = cons6*gamma(7.+mu_c(i,k))*tmp1*dum**2
           N_nuc = cons5*gamma(mu_c(i,k)+4.)*tmp1*dum
 !           tmpdbl1  = dexp(dble(aimm*(273.15-t(i,k))))
@@ -3185,6 +3199,18 @@ END subroutine p3_init
           dum = 0.005*exp(0.304*(273.15-t(i,k)))*1000.*inv_rho(i,k)         !Cooper (1986)
 !         dum = 0.005*dexp(dble(0.304*(273.15-t(i,k))))*1000.*inv_rho(i,k)  !Cooper (1986)
           dum = min(dum,100.e3*inv_rho(i,k)*SCF(k))
+#ifdef VIGNON_ICE_PHYSICS
+! set IFN concentration for T < -30.35 C for small (pristine) Southern Ocean values
+! may not be appropriate for the Arctic or for higher aerosol cases
+          dum = 0.0
+! Vignon et al. (2021) IFN(T) formula
+! set IFN concentration for T > -30.35 C
+          if ( t(i,k) .ge. (273.15 -30.35) ) dum = -0.31 * (t(i,k) + 21.06 - 273.15) - 2.88
+! set IFN concentration for T > -21.06 C
+          if ( t(i,k) .ge. (273.15 -21.06) ) dum = -0.14 * (t(i,k) + 21.06 - 273.15) - 2.88
+! IFN in per m**3
+          dum  = 10**dum * 1000.
+#endif
           N_nuc = max(0.,(dum-sum(nitot(i,k,:)))*odt)
 
           if (N_nuc.ge.1.e-20) then

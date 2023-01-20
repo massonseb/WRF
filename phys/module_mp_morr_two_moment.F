@@ -1,5 +1,7 @@
 !WRF:MODEL_LAYER:PHYSICS
 !
+!!#define DROPLET_REDUCE
+#define VIGNON_ICE_PHYSICS
 
 ! THIS MODULE CONTAINS THE TWO-MOMENT MICROPHYSICS CODE DESCRIBED BY
 !     MORRISON ET AL. (2009, MWR)
@@ -273,7 +275,13 @@ SUBROUTINE MORR_TWO_MOMENT_INIT(morr_rimed_ice) ! RAS
 ! SET CONSTANT DROPLET CONCENTRATION (UNITS OF CM-3)
 ! IF NO COUPLING WITH WRF-CHEM
 
-      NDCNST = 250.
+!!      NDCNST = 250.
+#ifdef DROPLET_REDUCE
+! modification for more pristine Arctic clouds from RASM - taken from Polar WRF' Morrison scheme
+ ndcnst = 100.e+6
+#else
+ ndcnst = 200.e+6
+#endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! NOTE, THE FOLLOWING OPTIONS RELATED TO DROPLET ACTIVATION 
@@ -2391,6 +2399,11 @@ END SUBROUTINE MP_MORR_TWO_MOMENT
 ! MIXING RATIO, SINCE STRICT CONSERVATION NOT CHECKED FOR NUMBER CONC
 
            NNUCCC(K) = MIN(NNUCCC(K),NC3D(K)/DT)
+#ifdef VIGNON_ICE_PHYSICS
+! remove contact freezing and immersion freezing based upon Vignon et al. (2021)
+           MNUCCC(K) = 0.0
+           NNUCCC(K) = 0.0
+#endif
 
         END IF
 
@@ -2897,6 +2910,18 @@ END SUBROUTINE MP_MORR_TWO_MOMENT
       kc2 = 0.005*exp(0.304*(273.15-T3D(K)))*1000. ! convert from L-1 to m-3
 ! limit to 500 L-1
       kc2 = min(kc2,500.e3)
+#ifdef VIGNON_ICE_PHYSICS
+! set IFN concentration for T < -30.35 C for small Southern Ocean values
+          kc2 = 0.0
+! set IFN concentration for T > -30.35 C
+          if ( T3D(K) .ge. (273.15 -30.35) ) kc2 = -0.31 * (T3D(K) + 21.06 - 273.15) - 2.88
+! set IFN concentration for T > -21.06 C
+          if ( T3D(K) .ge. (273.15 -21.06) ) kc2 = -0.14 * (T3D(K) + 21.06 - 273.15) - 2.88
+!          kc2 = exp(kc2)
+! IFN in per m**3
+          kc2  = 10**kc2 * 1000.
+#endif
+
       kc2=MAX(kc2/rho(k),0.)  ! convert to kg-1
 
           IF (KC2.GT.NI3D(K)+NS3D(K)+NG3D(K)) THEN

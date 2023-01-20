@@ -1055,7 +1055,7 @@ CONTAINS
        DO NS = 1, NSOIL
           SH2O(I,NS,J) = 1.0
        ENDDO
-       LAI(I,J) = 0.01
+       LAI(I,J) = 0.01 ! ? bai
 
        CYCLE ILOOP
 
@@ -3499,7 +3499,7 @@ SUBROUTINE lsm_mosaic(DZ8W,QV3D,P8W3D,T3D,TSK,                      &
              DO NS = 1, NSOIL
                 SH2O(I,NS,J) = 1.0
              ENDDO
-             LAI(I,J) = 0.01
+             LAI(I,J) = 0.01  ! ??? bai
       
              CYCLE ILOOP
       

@@ -586,6 +586,9 @@ BENCH_START(surf_driver_tim)
      &        ,VEGFRA=grid%vegfra      ,VZ0=grid%vz0       ,V_FRAME=grid%v_frame    &
      &        ,V_PHY=grid%v_phy        ,WARM_RAIN=grid%warm_rain                    &
      &        ,WSPD=grid%wspd          ,XICE=grid%xice     ,XLAND=grid%xland        &
+! bai 20141023=======================================================================
+     &        ,LANDMASK=grid%landmask  ,LU_INDEX=grid%lu_index                      &
+!====================================================================================
      &        ,MAX_EDOM=grid%num_ext_model_couple_dom      ,CPLMASK=grid%cplmask    &
      &        ,Z0=grid%z0              ,Z=grid%z        ,ZNT=grid%znt               &
      &        ,ZS=grid%zs              ,ALBSI=grid%albsi , ICEDEPTH=grid%icedepth   &

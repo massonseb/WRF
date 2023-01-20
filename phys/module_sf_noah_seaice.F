@@ -1,4 +1,5 @@
 MODULE module_sf_noah_seaice
+#define BPRC_MODS
 #if defined(mpas)
 use mpas_atmphys_constants,only: cp,R_D=>R_d,XLF,XLV,RHOWATER=>rho_w,STBOLT
 use mpas_atmphys_utilities, only: physics_error_fatal
@@ -292,6 +293,10 @@ CONTAINS
          FATAL_ERROR( 'Physical snow depth is less than snow water equiv.' )
       ENDIF
       CALL CSNOW (SNCOND,SNDENS)
+#ifdef BPRC_MODS
+! snow conductivity over sea ice from Persson (2012, Clim. Dyn., 39, 1349-1371) and Sturm, Perovich and Holmgren (2002, JGR, 107(C21), 8043)
+      SNCOND = 0.3
+#endif
 
 ! ----------------------------------------------------------------------
 ! DETERMINE IF IT'S PRECIPITATING AND WHAT KIND OF PRECIP IT IS.
@@ -340,6 +345,11 @@ CONTAINS
          ENDIF
 
          CALL CSNOW (SNCOND,SNDENS)
+
+#ifdef BPRC_MODS
+! snow conductivity over sea ice from Persson (2012, Clim. Dyn., 39, 1349-1371) and Sturm, Perovich and Holmgren (2002, JGR, 107(C21), 8043)
+      SNCOND = 0.3
+#endif
 
       END IF
 

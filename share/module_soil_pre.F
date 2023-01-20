@@ -49,6 +49,9 @@ CONTAINS
 
    SUBROUTINE adjust_for_seaice_pre ( xice , landmask , tsk , ivgtyp , vegcat , lu_index , &
                                       xland , landusef , isltyp , soilcat , soilctop , &
+! bai ========================================================================20160916
+                                      icedepth , snowsi , albsi, & 
+! ====================================================================================
                                       soilcbot , tmn , &
                                       seaice_threshold , &
                                       fractional_seaice, &
@@ -73,6 +76,9 @@ CONTAINS
       INTEGER , DIMENSION(ims:ime,jms:jme), INTENT(OUT) :: isltyp , ivgtyp
       REAL , DIMENSION(ims:ime,jms:jme) , INTENT(INOUT) :: landmask , xice , tsk , lu_index , &
                                                            vegcat, xland , soilcat , tmn
+! bai ============================================================================20160916
+      REAL , DIMENSION(ims:ime,jms:jme) , INTENT(INOUT) :: icedepth , snowsi , albsi
+! ========================================================================================
       REAL , INTENT(IN) :: seaice_threshold
 
       INTEGER :: i , j , num_seaice_changes , loop
@@ -96,6 +102,11 @@ CONTAINS
                   IF ( skip_middle_points_t ( ids , ide , jds , jde , i , j , em_width , hold_ups ) ) CYCLE 
                   IF ( xice(i,j) .GT. 200.0 ) THEN
                      xice(i,j) = 0.
+! bai ==============================================================20141125
+                     icedepth(i,j) = 0.
+                     snowsi(i,j) = 0.
+                     albsi(i,j)  = 0.
+!===========================================================================
                      num_seaice_changes = num_seaice_changes + 1
                   END IF
                END DO
@@ -139,6 +150,11 @@ CONTAINS
                      soilcbot(i,isltyp(i,j),j)=1.
                   ELSE
                      xice(i,j) = 0.0
+! bai ==============================================================20141125
+                     icedepth(i,j) = 0.
+                     snowsi(i,j) = 0.
+                     albsi(i,j)  = 0.
+!===========================================================================
                   END IF
                END DO
             END DO
@@ -156,6 +172,11 @@ CONTAINS
                   IF ( landmask(i,j) .GT. 0.5 ) THEN
                      if (xice(i,j).gt.0) num_seaice_changes = num_seaice_changes + 1
                      xice(i,j) = 0.
+! bai ==============================================================20141125
+                     icedepth(i,j) = 0.
+                     snowsi(i,j) = 0.
+                     albsi(i,j)  = 0.
+!===========================================================================
                   END IF
                END DO
             END DO
@@ -180,6 +201,9 @@ CONTAINS
                                       num_soil_layers , &
                                       iswater , isice , &
                                       scheme , &
+! bai ========================================================================20141125
+                                      icedepth , snowsi , albsi, & 
+! ================================================================================
                                       ids , ide , jds , jde , kds , kde , &
                                       ims , ime , jms , jme , kms , kme , &
                                       its , ite , jts , jte , kts , kte )
@@ -202,6 +226,9 @@ CONTAINS
       REAL , DIMENSION(ims:ime,jms:jme) , INTENT(INOUT) :: landmask , xice , tsk , lu_index , &
                                                            vegcat, xland , soilcat , tmn , &
                                                            tsk_old , vegfra
+! bai ============================================================================20141125
+      REAL , DIMENSION(ims:ime,jms:jme) , INTENT(INOUT) :: icedepth , snowsi , albsi
+! ========================================================================================
       INTEGER , INTENT(IN) :: flag_sst
       REAL , INTENT(IN) :: seaice_threshold
       REAL :: total_depth , mid_point_depth
@@ -235,6 +262,11 @@ CONTAINS
                   IF ( skip_middle_points_t ( ids , ide , jds , jde , i , j , em_width , hold_ups ) ) CYCLE 
                   IF ( xice(i,j) .GT. 200.0 ) THEN
                      xice(i,j) = 0.
+! bai ==============================================================20141125
+                     icedepth(i,j) = 0.
+                     snowsi(i,j) = 0.
+                     albsi(i,j)  = 0.
+!===========================================================================
                      num_seaice_changes = num_seaice_changes + 1
                   END IF
                END DO
@@ -302,6 +334,11 @@ CONTAINS
                      END DO
                   ELSE IF ( xice(i,j) .LT. xice_threshold ) THEN
                      xice(i,j) = 0.
+! bai ==============================================================20141125
+                     icedepth(i,j) = 0.
+                     snowsi(i,j) = 0.
+                     albsi(i,j)  = 0.
+!===========================================================================
                   END IF
                END DO
             END DO
@@ -317,6 +354,11 @@ CONTAINS
                   IF ( skip_middle_points_t ( ids , ide , jds , jde , i , j , em_width , hold_ups ) ) CYCLE 
                   IF ( xice(i,j) .GT. 200.0 ) THEN
                      xice(i,j) = 0.
+! bai ==============================================================20141125
+                     icedepth(i,j) = 0.
+                     snowsi(i,j) = 0.
+                     albsi(i,j)  = 0.
+!===========================================================================
                      num_seaice_changes = num_seaice_changes + 1
                   END IF
                END DO
@@ -396,6 +438,11 @@ CONTAINS
                      END DO
                   ELSE IF ( xice(i,j) .LT. xice_threshold ) THEN
                      xice(i,j) = 0.
+! bai ==============================================================20141125
+                     icedepth(i,j) = 0.
+                     snowsi(i,j) = 0.
+                     albsi(i,j)  = 0.
+!===========================================================================
                   END IF
                END DO
             END DO
@@ -3123,6 +3170,9 @@ CONTAINS
    SUBROUTINE adjust_for_seaice_pre ( xice , landmask , tsk , ivgtyp , vegcat , lu_index , &
                                       xland , landusef , isltyp , soilcat , soilctop , &
                                       soilcbot , tmn , &
+! bai ========================================================================20141125
+                                      icedepth , snowsi , albsi, & 
+! ====================================================================================
                                       seaice_threshold , &
                                       fractional_seaice, &
                                       num_veg_cat , num_soil_top_cat , num_soil_bot_cat , &
@@ -3146,6 +3196,9 @@ CONTAINS
       INTEGER , DIMENSION(ims:ime,jms:jme), INTENT(OUT) :: isltyp , ivgtyp
       REAL , DIMENSION(ims:ime,jms:jme) , INTENT(INOUT) :: landmask , xice , tsk , lu_index , &
                                                            vegcat, xland , soilcat , tmn
+! bai ============================================================================20141125
+      REAL , DIMENSION(ims:ime,jms:jme) , INTENT(INOUT) :: icedepth , snowsi , albsi
+! ========================================================================================
       REAL , INTENT(IN) :: seaice_threshold
 
       INTEGER :: i , j , num_seaice_changes , loop
@@ -3169,6 +3222,11 @@ CONTAINS
                DO i = its , MIN(ide-1,ite)
                   IF ( xice(i,j) .GT. 200.0 ) THEN
                      xice(i,j) = 0.
+! bai ==============================================================20141125
+                     icedepth(i,j) = 0.
+                     snowsi(i,j) = 0.
+                     albsi(i,j)  = 0.
+!===========================================================================
                      num_seaice_changes = num_seaice_changes + 1
                   END IF
                END DO
@@ -3210,6 +3268,11 @@ CONTAINS
                      soilcbot(i,isltyp(i,j),j)=1.
                   ELSE
                      xice(i,j) = 0.0
+! bai ==============================================================20141125
+                     icedepth(i,j) = 0.
+                     snowsi(i,j) = 0.
+                     albsi(i,j)  = 0.
+!===========================================================================
                   END IF
                END DO
             END DO
@@ -3236,6 +3299,9 @@ CONTAINS
                                       num_soil_layers , &
                                       iswater , isice , &
                                       scheme , &
+! bai ========================================================================20141125
+                                      icedepth , snowsi , albsi, & 
+! ====================================================================================
                                       ids , ide , jds , jde , kds , kde , &
                                       ims , ime , jms , jme , kms , kme , &
                                       its , ite , jts , jte , kts , kte )
@@ -3256,6 +3322,9 @@ CONTAINS
       INTEGER , DIMENSION(ims:ime,jms:jme), INTENT(OUT) :: isltyp , ivgtyp
       REAL , DIMENSION(ims:ime,jms:jme) , INTENT(INOUT) :: landmask , xice , tsk , lu_index , &
                                                            vegcat, xland , soilcat , tmn
+! bai ============================================================================20141125
+      REAL , DIMENSION(ims:ime,jms:jme) , INTENT(INOUT) :: icedepth , snowsi , albsi
+! ========================================================================================
       REAL , INTENT(IN) :: seaice_threshold
       REAL :: total_depth , mid_point_depth
 
@@ -3280,6 +3349,11 @@ CONTAINS
                DO i = its , MIN(ide-1,ite)
                   IF ( xice(i,j) .GT. 200.0 ) THEN
                      xice(i,j) = 0.
+! bai ==============================================================20141125
+                     icedepth(i,j) = 0.
+                     snowsi(i,j) = 0.
+                     albsi(i,j)  = 0.
+!===========================================================================
                      num_seaice_changes = num_seaice_changes + 1
                   END IF
                END DO
@@ -3334,6 +3408,11 @@ CONTAINS
                      END DO
                   ELSE
                      xice(i,j) = 0.0
+! bai ==============================================================20141125
+                     icedepth(i,j) = 0.
+                     snowsi(i,j) = 0.
+                     albsi(i,j)  = 0.
+!===========================================================================
                   END IF
                END DO
             END DO
@@ -3348,6 +3427,11 @@ CONTAINS
                DO i = its , MIN(ide-1,ite)
                   IF ( xice(i,j) .GT. 200.0 ) THEN
                      xice(i,j) = 0.
+! bai ==============================================================20141125
+                     icedepth(i,j) = 0.
+                     snowsi(i,j) = 0.
+                     albsi(i,j)  = 0.
+!===========================================================================
                      num_seaice_changes = num_seaice_changes + 1
                   END IF
                END DO
@@ -3408,7 +3492,12 @@ CONTAINS
                      END DO
                   ELSE IF ( xice(i,j) .LT. xice_threshold ) THEN
                      xice(i,j) = 0.
-                  END IF
+! bai ==============================================================20141125
+                     icedepth(i,j) = 0.
+                     snowsi(i,j) = 0.
+                     albsi(i,j)  = 0.
+!===========================================================================
+                 END IF
                END DO
             END DO
             IF ( num_seaice_changes .GT. 0 ) THEN
