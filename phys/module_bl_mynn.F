@@ -2769,6 +2769,7 @@ CONTAINS
        &qnwfa,qnifa,                       &
        &ust,flt,flq,flqv,flqc,wspd,qcg,    &
        &uoce,voce,                         &
+       &uice,vice,xice,                    &
        &tsq,qsq,cov,                       &
        &tcd,qcd,                           &
        &dfm,dfh,dfq,                       &
@@ -2827,7 +2828,7 @@ CONTAINS
          &qnwfa,qnifa,dfm,dfh
     REAL, DIMENSION(kts:kte), INTENT(inout) :: du,dv,dth,dqv,dqc,dqi,&
          &dqni,dqnc,dqnwfa,dqnifa
-    REAL, INTENT(IN) :: delt,ust,flt,flq,flqv,flqc,wspd,uoce,voce,qcg
+    REAL, INTENT(IN) :: delt,ust,flt,flq,flqv,flqc,wspd,uoce,voce,qcg,uice,vice,xice
 
 !    REAL, INTENT(IN) :: delt,ust,flt,flq,qcg,&
 !         &gradu_top,gradv_top,gradth_top,gradqv_top
@@ -2894,7 +2895,7 @@ CONTAINS
     a(1)=0.
     b(1)=1. + dtz(k)*(dfm(k+1)+ust**2/wspd) - 0.5*dtz(k)*s_aw(k+1)*onoff
     c(1)=-dtz(k)*dfm(k+1) - 0.5*dtz(k)*s_aw(k+1)*onoff
-    d(1)=u(k) + dtz(k)*uoce*ust**2/wspd - dtz(k)*s_awu(k+1)*onoff + &
+    d(1)=u(k) + dtz(k)*(uice*xice+uoce(1.-xice))*ust**2/wspd - dtz(k)*s_awu(k+1)*onoff + &
          sub_u(k)*delt + det_u(k)*delt
 
 !JOE - tend test
@@ -2948,7 +2949,7 @@ CONTAINS
     b(1)=1. + dtz(k)*(dfm(k+1)+ust**2/wspd) - 0.5*dtz(k)*s_aw(k+1)*onoff
     c(1)=   - dtz(k)*dfm(k+1)               - 0.5*dtz(k)*s_aw(k+1)*onoff
 !!    d(1)=v(k)
-    d(1)=v(k) + dtz(k)*voce*ust**2/wspd - dtz(k)*s_awv(k+1)*onoff + &
+    d(1)=v(k) + dtz(k)*(vice*xice+voce*(1.-xice))*ust**2/wspd - dtz(k)*s_awv(k+1)*onoff + &
           sub_v(k)*delt + det_v(k)*delt
 
 !JOE - tend test
@@ -3882,6 +3883,7 @@ ENDIF
        &xland,ts,qsfc,qcg,ps,           &
        &ust,ch,hfx,qfx,rmol,wspd,       &
        &uoce,voce,                      & !ocean current
+       &uice,vice,xice,                 & !sea-ice velocity
        &vdfg,                           & !Katata-added for fog dep
        &Qke, & !TKE_PBL,                            &
        &qke_adv,bl_mynn_tkeadvect,      & !ACF for QKE advection
@@ -3972,7 +3974,7 @@ ENDIF
     REAL, DIMENSION(IMS:IME,KMS:KME,JMS:JME), OPTIONAL, INTENT(in)::&
          &qc,qi,qni,qnc,qnwfa,qnifa
     REAL, DIMENSION(IMS:IME,JMS:JME), INTENT(in) :: xland,ust,&
-         &ch,rmol,ts,qsfc,qcg,ps,hfx,qfx,wspd,uoce,voce,vdfg,znt
+         &ch,rmol,ts,qsfc,qcg,ps,hfx,qfx,wspd,uoce,voce,vdfg,znt,uice,vice,xice
 
     REAL, DIMENSION(IMS:IME,KMS:KME,JMS:JME), INTENT(inout) :: &
          &Qke,Tsq,Qsq,Cov, &
@@ -4768,6 +4770,7 @@ ENDIF
                &ust(i,j),flt,flq,flqv,flqc,      &
                &wspd(i,j),qcg(i,j),              &
                &uoce(i,j),voce(i,j),             &
+               &uice(i,j),vice(i,j),xice(i,j)    &
                &tsq1, qsq1, cov1,                &
                &tcd, qcd,                        &
                &dfm, dfh, dfq,                   &

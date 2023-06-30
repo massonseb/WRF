@@ -21,7 +21,7 @@ CONTAINS
                  ,p_phy,pi_phy,p8w,t_phy,dz8w,z                    &
                  ,exch_h,exch_m,akhs,akms                          &
                  ,thz0,qz0,uz0,vz0,qsfc,f                          &
-                 ,lowlyr,u10,v10,uoce,voce,t2                      &
+                 ,lowlyr,u10,v10,uoce,voce,uice,vice,t2            &
                  ,psim,psih,fm,fhh,gz1oz0, wspd,br,chklowq         &
                  ,bl_pbl_physics, ra_lw_physics, dx, dy            &
                  ,dx2d ,area2d                                     &
@@ -335,6 +335,8 @@ CONTAINS
 !-- qsfc          specific humidity at lower boundary (kg/kg)
 !-- UOCE          sea surface zonal currents (m s-1)
 !-- VOCE          sea surface meridional currents (m s-1)
+!-- UICE          sea-ice surface zonal velocity (m s-1)
+!-- VICE          sea-ice surface meridional velocity (m s-1)
 !-- th2           diagnostic 2-m theta from surface layer and lsm
 !-- t2            diagnostic 2-m temperature from surface layer and lsm
 !-- q2            diagnostic 2-m mixing ratio from surface layer and lsm
@@ -554,8 +556,8 @@ CONTAINS
                                                           GRDFLX, &
                                                              U10, &
                                                              V10, &
-                                                            UOCE, &
-                                                            VOCE, &
+                                                       UOCE,UICE, &
+                                                       VOCE,VICE, &
                                                               T2, &
                                                            POWER, &
                                                             WSPD
@@ -1741,6 +1743,7 @@ CONTAINS
                    &xland=xland,ts=tsk,qsfc=qsfc,qcg=qcg,ps=psfc,        &
                    &ust=ust,ch=ch,hfx=hfx,qfx=qfx,rmol=rmol,wspd=wspd,   &
                    &uoce=uoce,voce=voce,                                 & !Ocean currents
+                   &uice=uice,vice=vice,xice=xice                        & !Sea-Ice velocity
                    &vdfg=vdfg,                                           & !Katata -added
                    &Qke=qke,Sh3d=Sh3d,                                   &
                    &qke_adv=qke_adv,bl_mynn_tkeadvect=bl_mynn_tkeadvect, &

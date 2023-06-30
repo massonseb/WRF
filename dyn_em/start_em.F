@@ -1066,7 +1066,7 @@ endif
                       grid%xlat,grid%xlong,grid%xlong_u,grid%xlat_v,grid%albedo,grid%albbck,grid%GMT,grid%JULYR,grid%JULDAY,     &
                       grid%levsiz, num_ozmixm, num_aerosolc, grid%paerlev,  &
                       grid%alevsiz, grid%no_src_types,                      &
-                      grid%tmn,grid%xland,grid%znt,grid%z0,grid%ust,grid%mol,grid%pblh,grid%tke_pbl,    &
+                      grid%tmn,grid%xland,grid%znt,grid%znt_sea,grid%znt_ice,grid%z0,grid%ust,grid%mol,grid%qsfc_ice,grid%pblh,grid%tke_pbl,    &
                       grid%exch_h,grid%thc,grid%snowc,grid%mavail,grid%hfx,grid%qfx,grid%rainbl, &
                       grid%tslb,grid%zs,grid%dzs,config_flags%num_soil_layers,grid%warm_rain,  &
                       grid%adv_moist_cond, grid%is_CAMMGMP_used,                               &
@@ -1226,7 +1226,11 @@ endif
               grid%SABGsubgrid,grid%NRAsubgrid,&
               grid%SWUPsubgrid,grid%lhsoi, &
               grid%lhveg, grid%lhtran, & !end of CLM variables
-                      grid%TSK_SAVE,                        & !Optional fractional seaice
+              grid%ust_sea,grid%ust_ice,  &
+              grid%ustm_sea,grid%ustm_ice,                        & !Optional fractional seaice
+              grid%mol_sea,grid%mol_ice,  &
+              grid%hfx_sea,grid%hfx_ice,  &
+              grid%qfx_sea,grid%qfx_ice,  &
                       grid%itimestep, grid%fdob,            &
                       t00, p00, a,                      & ! for obs_nudge base state
                       grid%TYR, grid%TYRA, grid%TDLY, grid%TLAG, grid%NYEAR, grid%NDAY,grid%tmn_update, &

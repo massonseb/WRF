@@ -76,7 +76,7 @@ CONTAINS
                          XLAT,XLONG,xlong_u,xlat_v,ALBEDO,ALBBCK,GMT,JULYR,JULDAY,&
                          levsiz, n_ozmixm, n_aerosolc, paerlev,  &
                          alevsiz, no_src_types,                  &
-                         TMN,XLAND,ZNT,Z0,UST,MOL,PBLH,TKE_PBL,  &
+                         TMN,XLAND,ZNT,ZNT_SEA,ZNT_ICE,Z0,UST,MOL,QSFC_ICE,PBLH,TKE_PBL,  &
                          EXCH_H,THC,SNOWC,MAVAIL,HFX,QFX,RAINBL, &
                          TSLB,ZS,DZS,num_soil_layers,warm_rain,  &
                          adv_moist_cond,is_CAMMGMP_used,         &
@@ -221,7 +221,11 @@ CONTAINS
                          Q2subgrid,SABVsubgrid,SABGsubgrid,NRAsubgrid,       &
                          SWUPsubgrid,lhsoi,lhveg,lhtran,                     &
 ! end of CLM variables
-                         TSK_SAVE,                               & !Optional for fractional seaice
+                         UST_SEA,UST_ICE,                               & !Optional for fractional seaice
+                         USTM_SEA,USTM_ICE,                             &
+                         MOL_SEA,MOL_ICE,                               &
+                         HFX_SEA,HFX_ICE,                               & !Optional for fractional seaice
+                         QFX_SEA,QFX_ICE,                               & !Optional for fractional seaice
                          itimestep,                              & !Optional obs fdda
 #if ( EM_CORE == 1 )
                          fdob,                                   & !Optional obs fdda
@@ -485,7 +489,7 @@ CONTAINS
              cugd_tten,cugd_ttens,cugd_qvten,                &
              cugd_qvtens,cugd_qcten
    REAL,     DIMENSION( ims:ime , jms:jme ) , INTENT(INOUT) ::         &
-             XLAND,ZNT,Z0,UST,MOL,LU_INDEX,                         &
+             XLAND,ZNT,ZNT_SEA,ZNT_ICE,Z0,UST,MOL,LU_INDEX,                         &
              PBLH,THC,MAVAIL,HFX,QFX,RAINBL
    INTEGER , INTENT(INOUT)  :: landuse_ISICE, landuse_LUCATS
    INTEGER , INTENT(INOUT)  :: landuse_LUSEAS, landuse_ISN
@@ -594,7 +598,7 @@ CONTAINS
              TML,T0ML,HML,H0ML,HUML,HVML,TMOML
 ! fractional seaice
    REAL,     DIMENSION( ims:ime , jms:jme ) , OPTIONAL, INTENT(INOUT) ::    &
-             TSK_SAVE
+             UST_SEA,UST_ICE,USTM_SEA,USTM_ICE,HFX_SEA,HFX_ICE,QFX_SEA,QFX_ICE,MOL_SEA,MOL_ICE,QSFC_ICE
 !fdda
    REAL,     OPTIONAL, INTENT(IN) :: FGDT
    INTEGER , OPTIONAL, INTENT(OUT) :: STEPFG
@@ -1140,10 +1144,21 @@ CONTAINS
       GLW(i,j)=0.
 !-- initialize ust to a small value
       UST(i,j)=0.0001
+      UST_SEA(i,j)=0.0001
+      UST_ICE(i,j)=0.0001
+      USTM_SEA(i,j)=0.0001
+      USTM_ICE(i,j)=0.0001
       MOL(i,j)=0.0
+      MOL_SEA(i,j)=0.0
+      MOL_ICE(i,j)=0.0
+      QSFC_ICE(i,j)=0.2
       PBLH(i,j)=0.0
       HFX(i,j)=0.
+      HFX_SEA(i,j)=0.
+      HFX_ICE(i,j)=0.
       QFX(i,j)=0.
+      QFX_SEA(i,j)=0.
+      QFX_ICE(i,j)=0.
       RAINBL(i,j)=0.
       RAINNCV(i,j)=0.
       SNOWNCV(i,j)=0.
@@ -1207,6 +1222,8 @@ CONTAINS
 #endif
        MAVAIL(i,j)=1.0
      ENDIF
+     ZNT_SEA(i,j)=ZNT(i,j)
+     ZNT_ICE(i,j)=ZNT(i,j)
 
    ENDDO
    ENDDO

@@ -147,7 +147,7 @@ CONTAINS
 !-- REGIME      flag indicating PBL regime (stable, unstable, etc.)
 !-- PSIM        similarity stability function for momentum
 !-- PSIH        similarity stability function for heat
-!-- XLAND       land mask (1 for land, 2 for water)
+!-- XLAND       land mask (1 for land, 2 for water, 3 for land and ocean without sea-ice)
 !-- HFX         upward heat flux at the surface (W/m^2)
 !-- QFX         upward moisture flux at the surface (kg/m^2/s)
 !-- LH          net upward latent heat flux at surface (W/m^2)
@@ -255,7 +255,7 @@ CONTAINS
                                                         TH2,T2,Q2
 
       REAL, OPTIONAL, DIMENSION( ims:ime, jms:jme )              , &
-                INTENT(OUT)     ::              ck,cka,cd,cda,ustm
+                INTENT(OUT)     ::                  ck,cka,cd,cda
 !
       REAL,     DIMENSION( ims:ime, jms:jme )                    , &
                 INTENT(INOUT)               ::             REGIME, &
@@ -274,7 +274,8 @@ CONTAINS
                                                                CH, &
                                                         FLHC,FLQC, &
                                                    GZ1OZ0,WSPD,BR, &
-                                                        PSIM,PSIH
+                                                        PSIM,PSIH, &
+                                                             USTM
 
 !ADDITIONAL OUTPUT
       REAL,     DIMENSION( ims:ime, jms:jme )    ::   wstar,qstar
@@ -302,7 +303,8 @@ CONTAINS
       ktf=MIN0(kte,kde-1)
 
       DO J=jts,jte
-        DO i=its,ite
+         DO i=its,ite
+           IF ( XLAND(I,J) == 3.) CYCLE
            dz8w1d(I) = dz8w(i,kts,j)
            dz2w1d(I) = dz8w(i,kts+1,j)
            U1D(i) =U3D(i,kts,j)
@@ -324,6 +326,7 @@ CONTAINS
 
         IF (itimestep==1) THEN
            DO i=its,ite
+              IF ( XLAND(I,J) == 3.) CYCLE
               UST(i,j)=MAX(0.04*SQRT(U1D(i)*U1D(i) + V1D(i)*V1D(i)),0.001)
               MOL(i,j)=0.     ! Tstar
               QSFC(i,j)=QV3D(i,kts,j)/(1.+QV3D(i,kts,j))
@@ -439,15 +442,16 @@ CONTAINS
                                                            GZ1OZ0, &
                                                              WSPD, &
                                                                BR, &
-                                                        PSIM,PSIH
-      REAL,     DIMENSION( its:ite ), INTENT(IN)   ::     rstoch1D
+                                                        PSIM,PSIH, &
+                                                             USTM   
+      REAL,     DIMENSION( its:ite ), INTENT(IN)   ::     rstoch1D 
 
       ! DIAGNOSTIC OUTPUT
       REAL,     DIMENSION( ims:ime ), INTENT(OUT)   ::    U10,V10, &
                                                         TH2,T2,Q2
 
       REAL, OPTIONAL, DIMENSION( ims:ime )                       , &
-                INTENT(OUT)     ::              ck,cka,cd,cda,ustm
+                INTENT(OUT)     ::                  ck,cka,cd,cda
 !--------------------------------------------
 !JOE-additinal output
       REAL,     DIMENSION( ims:ime ) ::                wstar,qstar
@@ -493,6 +497,7 @@ CONTAINS
 !-------------------------------------------------------------------
 
       DO I=its,ite
+         IF ( XLAND(I) == 3.) CYCLE
          ! CONVERT GROUND & LOWEST LAYER TEMPERATURE TO POTENTIAL TEMPERATURE:
          ! PSFC cmb
          PSFC(I)=PSFCPA(I)/1000.
@@ -516,6 +521,7 @@ CONTAINS
       ENDDO
 
       DO I=its,ite
+         IF ( XLAND(I) == 3.) CYCLE
          IF (TSK(I) .LT. 273.15) THEN
             !SATURATION VAPOR PRESSURE WRT ICE (SVP1=.6112; 10*mb)
             E1=SVP1*EXP(4648*(1./273.15 - 1./TSK(I)) - &
@@ -549,6 +555,7 @@ CONTAINS
       ENDDO
 
       DO I=its,ite
+         IF ( XLAND(I) == 3.) CYCLE
          WSPD(I)=SQRT(U1D(I)*U1D(I)+V1D(I)*V1D(I))     
 
          !TGS:THVGB(I)=THGB(I)*(1.+EP1*QSFC(I)*MAVAIL(I)) 
@@ -612,7 +619,7 @@ CONTAINS
 !--------------------------------------------------------------------
 
  DO I=its,ite
-
+    IF ( XLAND(I) == 3.) CYCLE
     !COMPUTE KINEMATIC VISCOSITY (m2/s) Andreas (1989) CRREL Rep. 89-11
     !valid between -173 and 277 degrees C.
     VISC=1.326e-5*(1. + 6.542e-3*TC1D(I) + 8.301e-6*TC1D(I)*TC1D(I) &
@@ -1002,6 +1009,7 @@ CONTAINS
       !  COMPUTE SURFACE HEAT AND MOISTURE FLUXES
       !----------------------------------------------------------
  DO I=its,ite
+    IF ( XLAND(I) == 3.) CYCLE
 
     !For computing the diagnostics and fluxes (below), whether the fluxes
     !are turned off or on, we need the following:

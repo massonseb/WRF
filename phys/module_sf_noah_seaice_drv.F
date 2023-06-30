@@ -18,11 +18,11 @@ contains
        &                  T3D, QV3D, P8W3D, DZ8W, NUM_SOIL_LAYERS, DT, FRPCPN, SR,      &
        &                  GLW, SWDOWN, RAINBL, SNOALB2D, QGH, XICE, XICE_THRESHOLD,     &
        &                  ALBSI, ICEDEPTH, SNOWSI,                                      &
-       &                  TSLB, EMISS, ALBEDO, Z02D, TSK, SNOW, SNOWC, SNOWH2D, &
+       &                  TSLB, EMISS, ALBEDO, Z02D, TSK, SNOW, SNOWC, SNOWH2D, ESNOW,  &
        &                  CHS, CHS2, CQS2,                                              &
        &                  RIB, ZNT, LH, HFX, QFX, POTEVP, GRDFLX, QSFC, ACSNOW,         &
        &                  ACSNOM, SNOPCX, SFCRUNOFF, NOAHRES,                           &
-       &                  SF_URBAN_PHYSICS, B_T_BEP, B_Q_BEP, RHO,                      &
+       &                  SF_URBAN_PHYSICS, B_T_BEP, B_Q_BEP, RHO, DQDTICE,             &
        &                  IDS, IDE, JDS, JDE, KDS, KDE,                                 &
        &                  IMS, IME, JMS, JME, KMS, KME,                                 &
        &                  ITS, ITE, JTS, JTE, KTS, KTE  )
@@ -32,6 +32,7 @@ contains
     USE module_state_description, ONLY : BEPSCHEME
     USE module_state_description, ONLY : BEP_BEMSCHEME
 #endif
+    USE module_model_constants  , ONLY : stbolt
 #endif
     implicit none
 
@@ -113,6 +114,7 @@ contains
          &                                               SNOPCX, &
          &                                            SFCRUNOFF, &
          &                                              NOAHRES, &
+         &                                                ESNOW, &
          &                                                 CHS2
 
     REAL,    DIMENSION( ims:ime, jms:jme )                      ,&
@@ -127,6 +129,10 @@ contains
          &                                              B_T_BEP
     REAL,    OPTIONAL, DIMENSION( ims:ime, kms:kme, jms:jme )  , &
          &   INTENT (IN)      ::                            RHO
+
+    REAL,    DIMENSION( ims:ime, jms:jme )                      ,&
+         &   INTENT(OUT)      ::                        DQDTICE
+
 
     INTEGER :: I
     INTEGER :: J
@@ -160,10 +166,11 @@ contains
 
     REAL    :: Z0
     REAL    :: ETA
+    REAL    :: DETADT
     REAL    :: SHEAT
+    REAL    :: DSHEATDT
     REAL    :: ETA_KINEMATIC
     REAL    :: FDOWN
-    REAL    :: ESNOW
     REAL    :: DEW
     REAL    :: ETP
     REAL    :: SSOIL
@@ -212,6 +219,8 @@ contains
               IF ( SEAICE_SNOWDEPTH_OPT == 1 ) THEN
                   SNOWSI(I,J) = 0.0
               ENDIF
+              DQDTICE(I,J) = 40.   ! DQDTICE is > 0. -DQDTICE is sent in module_cpl
+              ESNOW(I,J) = 0.      ! No sublimation if no seaice
               CYCLE SEAICE_ILOOP
           ENDIF
 
@@ -399,7 +408,6 @@ contains
           SHEAT            = -1.E36
           ETA_KINEMATIC    = -1.E36
           FDOWN            = -1.E36  ! Returned value unused.  Might as well be local to SFLX_SEAICE ?
-          ESNOW            = -1.E36  ! Returned value unused.  Might as well be local to SFLX_SEAICE ?
           DEW              = -1.E36  ! Returned value unused.  Might as well be local to SFLX_SEAICE ?
           ETP              = -1.E36
           SSOIL            = -1.E36
@@ -420,8 +428,8 @@ contains
                &           SNOALB, TBOT, Z0BRD, Z0, EMISSI,                 &    !S
                &           T1, STC, SNOWH, SNEQV, ALBEDOK, CH,              &    !H
                &           ALBEDOSI, SNOWONSI,                              &
-               &           ETA, SHEAT, ETA_KINEMATIC, FDOWN,                &    !O
-               &           ESNOW, DEW, ETP, SSOIL, FLX1, FLX2, FLX3,        &    !O
+               &           ETA, DETADT, SHEAT, DSHEATDT, ETA_KINEMATIC, FDOWN,       &    !O
+               &           ESNOW(I,J), DEW, ETP, SSOIL, FLX1, FLX2, FLX3,   &    !O
                &           SNOMLT, SNCOVR,                                  &    !O
                &           RUNOFF1, Q1, RIBB)
 
@@ -432,6 +440,7 @@ contains
           Z02D(I,J)    = Z0BRD
           SNOWH2D(I,J) = SNOWH
           SNOWC(I,J)   = SNCOVR
+          DQDTICE(I,J) = DETADT + DSHEATDT + 4. * EMISSI * STBOLT * T1 * T1 * T1  ! DQDTICE is > 0. -DQDTICE is sent in module_cpl
 
           ! Convert snow water equivalent from (m) back to (mm)
           SNOW(I,J)    = SNEQV * 1000.
