@@ -220,7 +220,8 @@ CONTAINS
                          ALBEDOsubgrid,LHsubgrid,HFXsubgrid,LWUPsubgrid,     &
                          Q2subgrid,SABVsubgrid,SABGsubgrid,NRAsubgrid,       &
                          SWUPsubgrid,lhsoi,lhveg,lhtran,                     &
-! end of CLM variables
+                         ! end of CLM variables
+                         TSK_SAVE,                               & !Optional for fractional seaice
                          UST_SEA,UST_ICE,                               & !Optional for fractional seaice
                          USTM_SEA,USTM_ICE,                             &
                          MOL_SEA,MOL_ICE,                               &
@@ -598,7 +599,7 @@ CONTAINS
              TML,T0ML,HML,H0ML,HUML,HVML,TMOML
 ! fractional seaice
    REAL,     DIMENSION( ims:ime , jms:jme ) , OPTIONAL, INTENT(INOUT) ::    &
-             UST_SEA,UST_ICE,USTM_SEA,USTM_ICE,HFX_SEA,HFX_ICE,QFX_SEA,QFX_ICE,MOL_SEA,MOL_ICE,QSFC_ICE
+             TSK_SAVE,UST_SEA,UST_ICE,USTM_SEA,USTM_ICE,HFX_SEA,HFX_ICE,QFX_SEA,QFX_ICE,MOL_SEA,MOL_ICE,QSFC_ICE
 !fdda
    REAL,     OPTIONAL, INTENT(IN) :: FGDT
    INTEGER , OPTIONAL, INTENT(OUT) :: STEPFG

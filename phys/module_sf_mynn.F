@@ -948,14 +948,12 @@ CONTAINS
      
     ! Compute u* without vconv for use in HFX calc when isftcflx > 0           
     WSPDI(I)=MAX(SQRT(U1D(I)*U1D(I)+V1D(I)*V1D(I)), wmin)
-    IF ( PRESENT(USTM) ) THEN
-       USTM(I)=0.5*USTM(I)+0.5*KARMAN*WSPDI(I)/PSIX
-    ENDIF
+    USTM(I)=0.5*USTM(I)+0.5*KARMAN*WSPDI(I)/PSIX
 
     IF ((XLAND(I)-1.5).LT.0.) THEN        !LAND
        UST(I)=MAX(UST(I),0.005)  !Further relaxing this limit - no need to go lower
        !Keep ustm = ust over land.
-       IF ( PRESENT(USTM) ) USTM(I)=UST(I)
+       USTM(I)=UST(I)
     ENDIF
 
     !------------------------------------------------------------

@@ -1226,6 +1226,7 @@ endif
               grid%SABGsubgrid,grid%NRAsubgrid,&
               grid%SWUPsubgrid,grid%lhsoi, &
               grid%lhveg, grid%lhtran, & !end of CLM variables
+              grid%TSK_SAVE,                 & !Optional fractional seaice
               grid%ust_sea,grid%ust_ice,  &
               grid%ustm_sea,grid%ustm_ice,                        & !Optional fractional seaice
               grid%mol_sea,grid%mol_ice,  &

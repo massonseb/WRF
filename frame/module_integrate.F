@@ -460,7 +460,7 @@ ENDIF
                  CALL model_to_grid_config_rec ( grid_ptr%id , model_config_rec , config_flags )
                ENDIF
 #endif
-               IF (coupler_on) CALL cpl_snd( grid_ptr ) 
+               IF (coupler_on) CALL cpl_snd( grid_ptr, config_flags ) 
                grid_ptr => grid_ptr%sibling
             END DO
             CALL set_current_grid_ptr( grid )

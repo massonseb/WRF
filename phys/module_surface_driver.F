@@ -27,7 +27,7 @@ CONTAINS
      &          ,psim,p_phy,q10,q2,qfx,qfx_sea,qfx_ice,qsfc,qsfc_ice,qshltr,qz0                &
 #endif
      &          ,raincv,rho,sfcevp,sfcexc,sfcrunoff ,acrunoff         &
-     &          ,smois,smstav,smstot,snoalb,snow,snowc,snowh,stepbl   &
+     &          ,smois,smstav,smstot,snoalb,snow,snowc,snowh,esnow,stepbl   &
      &          ,smcrel                                               &
      &          ,th10,th2,thz0,th_phy,tmn,tshltr,tsk,tsk_ice,tslb      &
      &          ,tyr,tyra,tdly,tlag,lagday,nyear,nday,tmn_update,yr   &
@@ -297,7 +297,8 @@ CONTAINS
      &          ,b_u_bep,b_v_bep,b_t_bep,b_q_bep                      &
      &          ,sf_bep,vl_bep                                        &
      &          ,a_e_bep,b_e_bep,dlg_bep                              &
-     &          ,dl_u_bep                                             &                          
+     &          ,dl_u_bep                                             &
+     &          ,tsk_save                                             & !for fractional seaice
      &          ,cldfra                                               & !ssib
      &          ,sf_surface_mosaic,mosaic_cat,mosaic_cat_index                                    & !danli mosaic
      &          ,landusef2,TSK_mosaic,QSFC_mosaic,TSLB_mosaic,SMOIS_mosaic,SH2O_mosaic            & !danli mosaic
@@ -1064,6 +1065,7 @@ CONTAINS
    REAL, DIMENSION( ims:ime , jms:jme ), OPTIONAL, INTENT(INOUT )::   TML, T0ML, HML, H0ML, HUML, HVML
    REAL, DIMENSION( ims:ime , jms:jme ), OPTIONAL, INTENT(IN    )::   F, TMOML
    REAL, DIMENSION( ims:ime , jms:jme ), OPTIONAL, INTENT(OUT   )::   CK, CKA, CD, CDA
+   REAL, DIMENSION( ims:ime , jms:jme ), OPTIONAL, INTENT(INOUT )::   TSK_SAVE
    REAL, DIMENSION( ims:ime , jms:jme ), OPTIONAL, INTENT(INOUT )::   USTM,USTM_SEA,USTM_ICE
 
 #if ( EM_CORE==1)
@@ -1544,7 +1546,7 @@ CONTAINS
    DO ij = 1 , num_tiles
       DO j=j_start(ij),j_end(ij)
          DO i=i_start(ij),i_end(ij)
-            XICEM(i,j) = XCE(i,j)
+            XICEM(i,j) = XICE(i,j)
          ENDDO
       ENDDO
    ENDDO
@@ -2270,7 +2272,7 @@ CONTAINS
                 FLHC_SEA, FLQC_SEA, QSFC_SEA, &
                 QGH_SEA, QZ0_SEA, HFX_SEA, QFX_SEA, LH_SEA,         &
                 TSK_SEA,                                             &
-                ust,ust_sea,ust_ice,znt,z0,pblh,mavail,rmol,                         &
+                ust,znt,z0,pblh,mavail,rmol,                         &
                 akhs,akms,                                           &
                 br,                                                 &
                 chs,chs2,cqs2,hfx,qfx,lh,flhc,flqc,qgh,cpm,ct,       &
@@ -5346,9 +5348,12 @@ CONTAINS
                                                              P3D, &
                                                              T3D, &
                                                             QC3D, &
-                                                      U3D,U3Dtmp, &
-                                                      V3D,V3Dtmp, &
-                                                   rho,th3d,pi3d
+                                                             U3D, &
+                                                             V3D, &
+                                                      rho,th3d,pi3d
+
+     REAL,     DIMENSION( ims:ime, kms:kme, jms:jme )           , &
+               INTENT(INOUT)   ::                     U3Dtmp,V3Dtmp
 
      REAL,     DIMENSION( ims:ime, jms:jme )                    , &
                INTENT(IN   )               ::               PBLH, &
@@ -5590,9 +5595,7 @@ CONTAINS
               t2(i,j)     = t2(i,j)  * XICE(i,j) + (1.0-XICE(i,j)) * t2_sea(i,j)
               th2(i,j)    = th2(i,j) * XICE(i,j) + (1.0-XICE(i,j)) * th2_sea(i,j)
               u10(i,j)    = u10(i,j) * XICE(i,j) + (1.0-XICE(i,j)) * u10_sea(i,j)
-              IF ( PRESENT ( USTM ) ) THEN
-                 USTM(i,j)= USTM_ICE(i,j)* XICE(i,j) + (1.0-XICE(i,j)) * USTM_sea(i,j)
-              ENDIF
+              USTM(i,j)= USTM_ICE(i,j)* XICE(i,j) + (1.0-XICE(i,j)) * USTM_sea(i,j)
               v10(i,j)    = v10(i,j) * XICE(i,j) + (1.0-XICE(i,j)) * v10_sea(i,j)
            ELSE
               mol(i,j)    = mol_ice(i,j)
