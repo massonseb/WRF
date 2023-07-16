@@ -11,7 +11,7 @@
    type (iv_type),       intent(inout)  :: iv        ! Obs. increment structure.
    type (j_type),        intent(inout)  :: j         ! Cost function.
 
-   integer                        :: i,n,ichan
+   integer                        :: i,n,ichan,ix,iy
 
    if (trace_use) call da_trace_entry("da_deallocate_radiance")
 
@@ -29,6 +29,18 @@
          deallocate (satinfo(i) % bcoef)
          deallocate (satinfo(i) % bcoef0)
          deallocate (satinfo(i) % error_std)
+
+	 ! Deallocate extra variables for AHI
+         if ( index(iv%instid(i)%rttovid_string, 'ahi') > 0 ) then
+	    deallocate ( satinfo(i) % BTLim)
+	    deallocate ( satinfo(i) % ca1)
+	    deallocate ( satinfo(i) % ca2)
+	    deallocate ( satinfo(i) % clearSkyBias)
+         endif
+
+         if (use_error_factor_rad) then
+            deallocate (satinfo(i) % error_factor)
+         endif
 
          deallocate (ob%instid(i) % ichan)
          deallocate (iv%instid(i) % ichan)
@@ -104,10 +116,14 @@
             if ( index(iv%instid(i)%rttovid_string, 'ahi') > 0 ) then
                deallocate (iv%instid(i)%cloudflag)
             end if			
+            if ( index(iv%instid(i)%rttovid_string,'gmi') > 0 ) then
+               deallocate (iv%instid(i)%clw)
+            end if
             deallocate (iv%instid(i)%ps)
             deallocate (iv%instid(i)%tb_xb)
             if ( crtm_cloud ) then
                deallocate (iv%instid(i)%tb_xb_clr)
+               deallocate (iv%instid(i)%cip)
             end if
             deallocate (iv%instid(i)%tb_qc)
             deallocate (iv%instid(i)%tb_inv)
@@ -127,8 +143,18 @@
             deallocate (iv%instid(i)%satazi)
             deallocate (iv%instid(i)%solzen)
             deallocate (iv%instid(i)%solazi)
+            deallocate (iv%instid(i)%tropt)
             deallocate (iv%instid(i)%gamma_jacobian)
-
+            deallocate(iv%instid(i)%cloud_frac)
+            if ( use_clddet_zz ) then
+               do iy = 1, iv%instid(i)%superob_width
+               do ix = 1, iv%instid(i)%superob_width
+                  deallocate (iv%instid(i)%superob(ix,iy)%cld_qc)
+                  deallocate (iv%instid(i)%superob(ix,iy)%tb_obs)
+               end do
+               end do
+               deallocate (iv%instid(i)%superob)
+           end if
            if (ANY(use_satcv)) then
 	      if (use_satcv(2)) then
                  do n = 1,iv%instid(i)%num_rad
