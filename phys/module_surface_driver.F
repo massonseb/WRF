@@ -1546,7 +1546,7 @@ CONTAINS
    DO ij = 1 , num_tiles
       DO j=j_start(ij),j_end(ij)
          DO i=i_start(ij),i_end(ij)
-            XICEM(i,j) = XICE(i,j)
+            XICEM(i,j) = XICE(i,j)   ! save previous time-step xice into xicem
          ENDDO
       ENDDO
    ENDDO
@@ -1745,13 +1745,13 @@ CONTAINS
           endif 
 #endif
 ! end check lake model    
-        IF ( XLAND(i,j) .GT. 1.5 .AND. XICE(I,J) .GE. XICE_THRESHOLD .AND. XICEM(I,J) .LT. XICE_THRESHOLD ) THEN
-          ! water point turns to sea-ice point
+        IF ( XICE(I,J) .GE. XICE_THRESHOLD ) THEN
+          ! water point is sea-ice point
           XLAND(I,J) = 1.
           IVGTYP(I,J) = ISICE
           ISLTYP(I,J) = 16
           VEGFRA(I,J) = 0.
-          TMN(I,J) = 271.4
+          TMN(I,J) = SST(I,J)  ! 271.4
 
 #ifdef BPRC_MODS
 ! bai  20141023=================================================
@@ -3375,17 +3375,21 @@ CONTAINS
                         znt(i,j)  = ( znt_ice(i,j)  * XICE(i,j) ) + ( (1.0-XICE(i,j)) * znt_sea(i,j)  )
                         TSK_ICE(i,j) = MIN( TSK(i,j), 273.15 )  ! Below 0°C
                         TSK_ICE(i,j) = MAX( TSK(i,j), 173.15 )  ! Above -100°C
-                        IF ( ( XICE(i,j) < 0.9 ) .AND. ( TSK_ICE(i,j) < 253.15 ) ) TSK_ICE(i,j) = 223.15
+                        IF ( ( XICE(i,j) < 0.9 ) .AND. ( TSK_ICE(i,j) < 223.15 ) ) TSK_ICE(i,j) = 223.15
                         IF ( ( XICE(i,j) < 0.2 ) .AND. ( TSK_ICE(i,j) < 253.15 ) ) TSK_ICE(i,j) = 253.15
                         IF ( ( XICE(i,j) < 0.1 ) .AND. ( TSK_ICE(i,j) < 263.15 ) ) TSK_ICE(i,j) = 263.15
                         tsk(i,j)  = ( tsk_ice(i,j)  * XICE(i,j) ) + ( (1.0-XICE(i,j)) * sst(i,j)  )
                      ELSE
+                        IF (XLAND(I,J) > 1.5) THEN
+                           tsk(i,j) = sst(i,j)
+                        ELSE
+                           tsk(i,j) = tsk_ice(i,j)
+                        ENDIF
                         qsfc(i,j) = qsfc_ice(i,j)
                         hfx(i,j)  = hfx_ice(i,j)
                         qfx(i,j)  = qfx_ice(i,j)
                         lh(i,j)   = lh_ice(i,j)
                         znt(i,j)  = znt_ice(i,j)
-                        IF (XLAND(I,J) > 1.5) tsk(i,j) = sst(i,j)
                      ENDIF
                   ENDDO
                ENDDO
@@ -3410,9 +3414,9 @@ CONTAINS
                IF(PRESENT(ACGRDFLX))ACGRDFLX(I,J)=ACGRDFLX(I,J) + GRDFLX(I,J)*DT
 
                ! Check that SFCDIAGS can declare these as intent(out)
-               T2(I,J)  = -1.E36
-               TH2(I,J) = -1.E36
-               Q2(I,J)  = -1.E36
+!!$               T2(I,J)  = -1.E36
+!!$               TH2(I,J) = -1.E36
+!!$               Q2(I,J)  = -1.E36
            ENDDO
            ENDDO
            
@@ -3421,17 +3425,17 @@ CONTAINS
            DO i=i_start(ij),i_end(ij)
 !             IF (IVGTYP(I,J) == ISWATER .OR. XICE(I,J) .GE. XICE_THRESHOLD) THEN
               IF (IVGTYP(I,J) == ISWATER .OR. (IVGTYP(I,J) == ISICE .AND. XICE(I,J) .GE. XICE_THRESHOLD)) THEN
-                 IF(CQS2(I,J).lt.1.E-5) then
-                   Q2(I,J)=QSFC(I,J)
-                 ELSE
-                   Q2(I,J) = QSFC(I,J) - QFX(I,J)/(PSFC(I,J)/(R_d * TSK(I,J))*CQS2(I,J))
-                 ENDIF
-                 IF(CHS2(I,J).lt.1.E-5) then
-                   T2(I,J) = TSK(I,J) 
-                 ELSE
-                   T2(I,J) = TSK(I,J) - HFX(I,J)/(PSFC(I,J)/(R_d * TSK(I,J))*CP*CHS2(I,J))
-                 ENDIF
-                   TH2(I,J) = T2(I,J)*(1.E5/PSFC(I,J))**RCP
+!!$                 IF(CQS2(I,J).lt.1.E-5) then
+!!$                   Q2(I,J)=QSFC(I,J)
+!!$                 ELSE
+!!$                   Q2(I,J) = QSFC(I,J) - QFX(I,J)/(PSFC(I,J)/(R_d * TSK(I,J))*CQS2(I,J))
+!!$                 ENDIF
+!!$                 IF(CHS2(I,J).lt.1.E-5) then
+!!$                   T2(I,J) = TSK(I,J) 
+!!$                 ELSE
+!!$                   T2(I,J) = TSK(I,J) - HFX(I,J)/(PSFC(I,J)/(R_d * TSK(I,J))*CP*CHS2(I,J))
+!!$                 ENDIF
+!!$                   TH2(I,J) = T2(I,J)*(1.E5/PSFC(I,J))**RCP
 !             ELSEIF (IVGTYP(I,J) == ISURBAN .OR. IVGTYP(I,J) == ISICE .OR. FVEGXY(I,J) == 0.0 ) THEN
               ELSEIF( IVGTYP(I,J) == ISURBAN    .or. IVGTYP(I,J) == LCZ_1 .or. IVGTYP(I,J) == LCZ_2 .or. &
                       IVGTYP(I,J) == LCZ_3      .or. IVGTYP(I,J) == LCZ_4 .or. IVGTYP(I,J) == LCZ_5 .or. &
@@ -4844,7 +4848,7 @@ CONTAINS
               QSFC_SEA(I,J) = PQ0SEA/PSFC*EXP(A2S*(TSK_SEA(i,j)-A3S)/(TSK_SEA(i,j)-A4S))
            ELSE
               ! This should be a land point or a true open water point
-              XLAND_SEA(i,j)=xland(i,j)
+              XLAND_SEA(i,j)  = xland(i,j)
               MAVAIL_SEA(i,j) = mavail(i,j)
               ZNT_SEA(I,J)    = ZNT_HOLD(I,J)
               Z0BASE_SEA(I,J) = Z0BASE(I,J)
@@ -5313,8 +5317,8 @@ CONTAINS
               U10,V10,TH2,T2,Q2,SNOWH,                             &
               GZ1OZ0,WSPD,BR,ISFFLX,DX,                            &
               SVP1,SVP2,SVP3,SVPT0,EP1,EP2,KARMAN,                 &
-              &itimestep,ch,th3d,pi3d,qc3d,rho,qcg,                &
-              &spp_pbl,pattern_spp_pbl,                            &
+              itimestep,ch,th3d,pi3d,qc3d,rho,qcg,                 &
+              spp_pbl,pattern_spp_pbl,                             &
               XICE,XICEM,SST,                                      &
               CHS2_SEA,CHS_SEA,CPM_SEA,CQS2_SEA,FLHC_SEA,FLQC_SEA, &
               HFX_SEA,LH_SEA,QFX_SEA,QGH_SEA,ZNT_SEA,UOCE,VOCE,    &
@@ -5361,9 +5365,12 @@ CONTAINS
                                                              QCG, &
                                                             PSFC, &
                                                            SNOWH, &
-                                                     TSK,TSK_ICE, &
+                                                             TSK, &
                                                        UOCE,VOCE, &
                                                        UICE,VICE 
+
+     REAL,     DIMENSION( ims:ime, jms:jme )                    , &
+               INTENT(INOUT)               ::            TSK_ICE
 
      REAL,     DIMENSION( ims:ime, jms:jme )                    , &
                INTENT(OUT  )               ::                U10, &
@@ -5472,27 +5479,44 @@ CONTAINS
      ! Save the variables before the first call
      ! (for land/frozen water) to SFCLAY_mynn.
     
-     MAVAIL(its:ite,jts:jte) = 0.3 ! fix - phys/module_physics_init.F - MAVAIL(i,j)=XMAVA(=0.3)
-     U3Dtmp(its:ite,kts,jts:jte)= U3D(its:ite,kts,jts:jte)-UICE(its:ite,jts:jte)
-     V3Dtmp(its:ite,kts,jts:jte)= V3D(its:ite,kts,jts:jte)-VICE(its:ite,jts:jte)
-
-     IF ( ( XICE(I,J) >= XICE_THRESHOLD ) .AND. ( XICEM(i,j) <  XICE_THRESHOLD ) ) THEN ! new sea-ice
-        ! keep TSK(i,j) = SST(i,j) as a first guess as it should be close to the freezing point
-        HFX_ICE(i,j) = 0.
-        QFX_ICE(i,j) = 0.
-        ! keep MOL_ICE(i,j) = MOL_SEA(i,j) as a first guess ??
-        ! keep QSFC_ICE(i,j) = QSFC_SEA(i,j) as a first guess ??
-        ! keep UST_ICE(i,j) = UST_SEA(i,j) as a first guess ??
-        ! keep ZNT_ICE(I,J) = ZNT_SEA(i,j) as a first guess ??
-        ! ELSE ! land or true open oce: no need to do anything
-     ENDIF
+     DO j = JTS , JTE
+        DO i = ITS, ITE
+           
+           IF ( XICE(I,J) >= XICE_THRESHOLD ) THEN ! sea-ice
+              MAVAIL(i,j) = 0.95 ! see SLMO (Moisture availability) in LANDUSE.TBL for 'Snow and Ice'
+              U3Dtmp(i,kts,j) = U3D(i,kts,j) - UICE(i,j)
+              V3Dtmp(i,kts,j) = V3D(i,kts,j) - VICE(i,j)
+              IF ( XICEM(i,j) <  XICE_THRESHOLD ) THEN ! new sea-ice
+                 TSK_ICE(i,j) = SST(i,j)
+                 HFX_ICE(i,j) = 0.
+                 QFX_ICE(i,j) = 0.
+                 ! keep MOL_ICE(i,j) = MOL_SEA(i,j) as a first guess ??
+                 ! keep QSFC_ICE(i,j) = QSFC_SEA(i,j) as a first guess ??
+                 ! keep UST_ICE(i,j) = UST_SEA(i,j) as a first guess ??
+                 ! keep ZNT_ICE(I,J) = ZNT_SEA(i,j) as a first guess ??
+              ELSE
+                 IF (itimestep==1) TSK_ICE(i,j) = TSK(i,j)   ! mendatory for the 1st time and no restart step otherwise TSK_ICE = 0°K -> shoud test if we started from a restart file or not... 
+              ENDIF
+           ELSE
+              IF(XLAND(i,j) .GT. 1.5) THEN ! open ocean (without sea ice)
+                 MAVAIL(i,j) = 1.0
+                 U3Dtmp(i,kts,j) = U3D(i,kts,j) - UOCE(i,j)
+                 V3Dtmp(i,kts,j) = V3D(i,kts,j) - VOCE(i,j)
+                 TSK_ICE(i,j) = SST(i,j)
+              ELSE
+                 IF (itimestep==1) TSK_ICE(i,j) = TSK(i,j)   ! mendatory for the 1st time and no restart step otherwise TSK_ICE = 0°K -> shoud test if we started from a restart file or not... 
+              ENDIF
+              ! IF ( XICEM(i,j) >=  XICE_THRESHOLD ) THEN ! was sea-ice
+              ! land or true open oce: no need to do anything
+           ENDIF
+        ENDDO
+     ENDDO
 
      ! land/frozen-water AND water without sea-ice call
      CALL SFCLAY_mynn(U3Dtmp,V3Dtmp,T3D,QV3D,P3D,dz8w,              &
           CP,G,ROVCP,R,XLV,PSFC,CHS,CHS2,CQS2,CPM,            &
           ZNT_ICE,UST_ICE,PBLH,MAVAIL,ZOL,MOL_ICE,REGIME,PSIM,PSIH,       &
-          XLAND,HFX_ICE,QFX_ICE,LH_ICE,TSK_ICE,FLHC,FLQC,QGH,RMOL,      &
-          QSFC_ICE,                                           &
+          XLAND,HFX_ICE,QFX_ICE,LH_ICE,TSK_ICE,FLHC,FLQC,QGH,QSFC_ICE,RMOL,      &
           U10,V10,TH2,T2,Q2,SNOWH,                            &
           GZ1OZ0,WSPD,BR,ISFFLX,DX,                           &
           SVP1,SVP2,SVP3,SVPT0,EP1,EP2,KARMAN,                &
@@ -5503,7 +5527,6 @@ CONTAINS
           its,ite, jts,jte, kts,kte,                          &
           ustm_ice,ck,cka,cd,cda,isftcflx,iz0tlnd                 )
 
-
      ! Set up lower boundary conditions to force an open-water cell containing sea-ice call
       DO j = JTS , JTE
         DO i = ITS , ITE
@@ -5511,23 +5534,17 @@ CONTAINS
               XLAND_SEA(i,j) = 2. !water
               MAVAIL_SEA(i,j)= 1.
               ZNT_SEA(i,j)   = 0.0001 !will be recalculated anyway
-              IF ( SST(i,j) .LT. 271.4 ) THEN
-                 SST(i,j)    = 271.4
-              ENDIF
-              QSFC_SEA(i,j)  = QSFC(i,j) !will be recalculated anyway
+              IF ( SST(i,j) .LT. 271.4 )   SST(i,j) = 271.4
+              QSFC_SEA(i,  j) = QSFC(i,j) !will be recalculated anyway
+              U3Dtmp(i,kts,j) = U3D(i,kts,j) - UOCE(i,j)
+              V3Dtmp(i,kts,j) = V3D(i,kts,j) - VOCE(i,j)
            ELSE
-              !keep original values
               XLAND_SEA(i,j) = 3. ! Specific flag to do nothing
-              MAVAIL_SEA(i,j)= MAVAIL(i,j)
-              QSFC_SEA(i,j)  = QSFC(i,j)
            ENDIF
         ENDDO
      ENDDO
-     U3Dtmp(its:ite,kts,jts:jte)= U3D(its:ite,kts,jts:jte)-UOCE(its:ite,jts:jte)
-     V3Dtmp(its:ite,kts,jts:jte)= V3D(its:ite,kts,jts:jte)-VOCE(its:ite,jts:jte)
-     
      ! open water (with sea-ice) call
-          CALL SFCLAY_mynn(U3Dtmp,V3Dtmp,T3D,QV3D,P3D,dz8w,              &
+          CALL SFCLAY_mynn(U3Dtmp,V3Dtmp,T3D,QV3D,P3D,dz8w,        &
                CP,G,ROVCP,R,XLV,PSFC,                              &
                CHS_SEA,CHS2_SEA,CQS2_SEA,CPM_SEA,                  &
                ZNT_SEA,UST_SEA,                                    &
@@ -5535,14 +5552,14 @@ CONTAINS
                ZOL_SEA,MOL_SEA,REGIME,PSIM_SEA,PSIH_SEA,           &
                XLAND_SEA,                                          &
                HFX_SEA,QFX_SEA,LH_SEA,                             &
-               SST,                                            &
+               SST,                                                &
                FLHC_SEA,FLQC_SEA,QGH_SEA,QSFC_SEA,RMOL_SEA,        &
                U10_SEA,V10_SEA,TH2_SEA,T2_SEA,Q2_SEA,SNOWH,        &
                GZ1OZ0_SEA,WSPD_SEA,BR_SEA,                         &
                ISFFLX,DX,                                          &
                SVP1,SVP2,SVP3,SVPT0,EP1,EP2,KARMAN,                &
-               &itimestep,CH_SEA,th3d,pi3d,qc3d,rho,qcg,           &
-               &spp_pbl,pattern_spp_pbl,                           &
+               itimestep,CH_SEA,th3d,pi3d,qc3d,rho,qcg,            &
+               spp_pbl,pattern_spp_pbl,                            &
                ids,ide, jds,jde, kds,kde,                          &
                ims,ime, jms,jme, kms,kme,                          &
                its,ite, jts,jte, kts,kte,                          &
@@ -5551,7 +5568,9 @@ CONTAINS
 
      DO j = JTS , JTE
         DO i = ITS, ITE
-           IF ( ( XICE(I,J) .GE. XICE_THRESHOLD )  .and.( XICE(i,j) .LE. 1.0 ) ) THEN
+           
+           IF ( ( XICE(I,J) .GE. XICE_THRESHOLD )  .AND.( XICE(i,j) .LE. 1.0 ) ) THEN
+
               ! weighted average for sea ice points
               br(i,j)     = br(i,j)     * XICE(i,j) + (1.0-XICE(i,j)) * br_sea(i,j)
               ! CHS2 -- wait
@@ -5563,17 +5582,17 @@ CONTAINS
               gz1oz0(i,j) = gz1oz0(i,j) * XICE(i,j) + (1.0-XICE(i,j)) * gz1oz0_sea(i,j)
               ! HFX  -- wait
               ! LH   -- wait
-              mol(i,j)    = mol_ice(i,j)    * XICE(i,j) + (1.0-XICE(i,j)) * mol_sea(i,j)
+              mol(i,j)    = mol_ice(i,j)* XICE(i,j) + (1.0-XICE(i,j)) * mol_sea(i,j)
               psih(i,j)   = psih(i,j)   * XICE(i,j) + (1.0-XICE(i,j)) * psih_sea(i,j)
               psim(i,j)   = psim(i,j)   * XICE(i,j) + (1.0-XICE(i,j)) * psim_sea(i,j)
               ! QFX  -- wait
               ! QGH  -- wait
               rmol(i,j)   = rmol(i,j)   * XICE(i,j) + (1.0-XICE(i,j)) * rmol_sea(i,j)
-              ust(i,j)    = ust_ice(i,j)    * XICE(i,j) + (1.0-XICE(i,j)) * ust_sea(i,j)
+              ust(i,j)    = ust_ice(i,j)* XICE(i,j) + (1.0-XICE(i,j)) * ust_sea(i,j)
               wspd(i,j)   = wspd(i,j)   * XICE(i,j) + (1.0-XICE(i,j)) * wspd_sea(i,j)
               zol(i,j)    = zol(i,j)    * XICE(i,j) + (1.0-XICE(i,j)) * zol_sea(i,j)
               ch(i,j)     = ch(i,j)     * XICE(i,j) + (1.0-XICE(i,j)) * ch_sea(i,j)
-              mavail(i,j) = mavail(i,j)     * XICE(i,j) + (1.0-XICE(i,j)) * mavail_sea(i,j)
+              mavail(i,j) = mavail(i,j) * XICE(i,j) + (1.0-XICE(i,j)) * mavail_sea(i,j)
 
               ! INTENT(OUT)
               ! --------------------------------------------------------------------
