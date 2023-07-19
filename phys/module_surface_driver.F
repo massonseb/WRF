@@ -1531,17 +1531,17 @@ CONTAINS
      xice_threshold = 0.02
   endif
 
-  if ( ( seaice_albedo_opt == 2 ) .and. ( ifndalbsi == 0 ) ) then
-      call wrf_error_fatal("Field ALBSI not found in input.  Field ALBSI is required if SEAICE_ALBEDO_OPT=2")
-  endif
-
-  if ( ( seaice_thickness_opt == 1 ) .and. ( ifndicedepth == 0 ) ) then
-      call wrf_error_fatal("Field ICEDEPTH not found in input.  Field ICEDEPTH is required if SEAICE_THICKNESS_OPT=1")
-  endif
-
-  if ( ( seaice_snowdepth_opt == 1 ) .and. ( ifndsnowsi == 0 ) ) then
-      call wrf_error_fatal("Field SNOWSI not found in input.  Field SNOWSI is required if SEAICE_SNOWDEPTH_OPT=1")
-   endif
+!!$  if ( ( seaice_albedo_opt == 2 ) .and. ( ifndalbsi == 0 ) ) then
+!!$      call wrf_error_fatal("Field ALBSI not found in input.  Field ALBSI is required if SEAICE_ALBEDO_OPT=2")
+!!$  endif
+!!$
+!!$  if ( ( seaice_thickness_opt == 1 ) .and. ( ifndicedepth == 0 ) ) then
+!!$      call wrf_error_fatal("Field ICEDEPTH not found in input.  Field ICEDEPTH is required if SEAICE_THICKNESS_OPT=1")
+!!$  endif
+!!$
+!!$  if ( ( seaice_snowdepth_opt == 1 ) .and. ( ifndsnowsi == 0 ) ) then
+!!$      call wrf_error_fatal("Field SNOWSI not found in input.  Field SNOWSI is required if SEAICE_SNOWDEPTH_OPT=1")
+!!$   endif
 
    DO ij = 1 , num_tiles
       DO j=j_start(ij),j_end(ij)
