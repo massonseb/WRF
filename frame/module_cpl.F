@@ -465,9 +465,9 @@ CONTAINS
          ALLOCATE( taut(ips:ipe,jps:jpe), taui(ips:ipe,jps:jpe), tauj(ips:ipe,jps:jpe) )
          DO j = jps, jpe
             DO i = ips, ipe
-               zspd(i,j) = MAX( SQRT( u_uo(i,j)**2 + v_vo(i,j)**2 ), 1.e-7 )
+               zspd      = MAX( SQRT( u_uo(i,j)**2 + v_vo(i,j)**2 ), 1.e-7 )
                taut(i,j) = grid%rho(i,kps,j) * grid%ust(i,j)**2
-               ztmp = taut(i,j) / zspd
+               ztmp      = taut(i,j) / zspd
                taui(i,j) = ztmp * u_uo(i,j)
                tauj(i,j) = ztmp * v_vo(i,j)
             END DO
