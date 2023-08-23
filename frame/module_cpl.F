@@ -82,6 +82,7 @@ CONTAINS
             rcvname(jwrf,jext, 3) = clprefix//'VOCE'                 ! receive ocean meridional surface current (m/s)
             rcvname(jwrf,jext, 4) = clprefix//'EOCE'                 ! receive ocean eastward   surface current (m/s)
             rcvname(jwrf,jext, 5) = clprefix//'NOCE'                 ! receive ocean northward  surface current (m/s)
+            rcvname(jwrf,jext, 6) = clprefix//'CHA_COEF'             ! receive charnock coefficient
             
             !=========================================================================================================
             ! Variables that can be sent by WRF : see subroutine cpl_snd (below) for calculation details
@@ -102,14 +103,25 @@ CONTAINS
             sndname(jwrf,jext, 8) = clprefix//'SURF_SENSIBLE'        ! send     surface  sensible heat flux
             sndname(jwrf,jext, 9) = clprefix//'SURF_NET_NON-SOLAR'   ! send net surface non-solar heat flux
 
-            ! momentum fluxes (N m-2)
+            ! momentum fluxes (N.m-2)
             !--------------------------------------------------------------------------------------------------
             sndname(jwrf,jext,10) = clprefix//'TAUX'                 ! send zonal      wind tress at atm-ocean interface
             sndname(jwrf,jext,11) = clprefix//'TAUY'                 ! send meridional wind tress at atm-ocean interface
             sndname(jwrf,jext,12) = clprefix//'TAUE'                 ! send Eastward   wind tress at atm-ocean interface
             sndname(jwrf,jext,13) = clprefix//'TAUN'                 ! send Northward  wind tress at atm-ocean interface
             sndname(jwrf,jext,14) = clprefix//'TAUMOD'               ! send module of  wind tress at atm-ocean interface
-            
+
+            ! wind speed for wave coupling (m.s-1)
+            !--------------------------------------------------------------------------------------------------
+            sndname(jwrf,jext,15) = clprefix//'WINDX_01'             ! send zonal      1st level relative wind speed
+            sndname(jwrf,jext,16) = clprefix//'WINDY_01'             ! send meridional 1st level relative wind speed
+            sndname(jwrf,jext,17) = clprefix//'WINDE_01'             ! send eastward   1st level relative wind speed
+            sndname(jwrf,jext,18) = clprefix//'WINDN_01'             ! send northward  1st level relative wind speed
+
+            ! Pressure at the air-sea interface (Pa)
+            !--------------------------------------------------------------------------------------------------
+            sndname(jwrf,jext,19) = clprefix//'PSFC'                 ! send Pressure reduced at the sea level
+
          END DO
       END DO
       
@@ -309,9 +321,9 @@ CONTAINS
       INTEGER                           :: ifldid, ifldidu, ifldidv
       INTEGER                           :: i, j
       INTEGER                           :: max_edom
-      REAL                              :: zu_uo, zv_vo, zspd, ztmp
+      REAL                              :: zspd, ztmp
       REAL, DIMENSION(:,:), ALLOCATABLE :: cplsnd
-      REAL, DIMENSION(:,:), ALLOCATABLE :: taut, taui, tauj
+      REAL, DIMENSION(:,:), ALLOCATABLE :: u_uo, v_vo, taut, taui, tauj
       LOGICAL,DIMENSION(:), ALLOCATABLE :: lltosend
       !!--------------------------------------------------------------------
 #if (EM_CORE == 1)
@@ -422,12 +434,30 @@ CONTAINS
       
       !
       !=========================================================================================================
-      ! momentum fluxes
+      ! momentum fluxes and 1st level wind
       !=========================================================================================================
       !
+      ! TAU[XE] or TAU[YN] or TAUMOD or WIND[XE]_01 or WIND[YN]_01 : prepare common fields
+      !--------------------------------------------------------------------------------------------------
+      ! test if we need to compute the 1st level relative wind components
+      lltosend(:) = cpl_tosend( grid%id, cpl_get_fldid( 'TAUMOD'   ), max_edom )   &   ! wind tress module
+         &     .OR. cpl_tosend( grid%id, cpl_get_fldid( 'TAUX'     ), max_edom )   &   ! or zonal
+         &     .OR. cpl_tosend( grid%id, cpl_get_fldid( 'TAUE'     ), max_edom )   &   ! or Eastward
+         &     .OR. cpl_tosend( grid%id, cpl_get_fldid( 'WINDX_01' ), max_edom )   &   ! or zonal wind speed
+         &     .OR. cpl_tosend( grid%id, cpl_get_fldid( 'WINDE_01' ), max_edom )       ! or eastward
+      IF ( COUNT(lltosend) > 0 ) THEN 
+         ALLOCATE( u_uo(ips:ipe,jps:jpe), v_vo(ips:ipe,jps:jpe) )
+         DO j = jps, jpe
+            DO i = ips, ipe
+               u_uo(i,j) = grid%u_phy(i,kps,j) - grid%uoce(i,j)
+               v_vo(i,j) = grid%v_phy(i,kps,j) - grid%voce(i,j)
+            END DO
+         END DO
+      END IF
+
       ! TAU[XE] or TAU[YN] or TAUMOD : prepare common fields
       !--------------------------------------------------------------------------------------------------
-      ! test if we need to compute the module of the wind speed and stres
+      ! test if we need to compute the wind stress module or components
       lltosend(:) = cpl_tosend( grid%id, cpl_get_fldid( 'TAUMOD' ), max_edom )   &   ! wind tress module
          &     .OR. cpl_tosend( grid%id, cpl_get_fldid( 'TAUX'   ), max_edom )   &   ! or zonal
          &     .OR. cpl_tosend( grid%id, cpl_get_fldid( 'TAUE'   ), max_edom )       ! or Eastward
@@ -435,18 +465,16 @@ CONTAINS
          ALLOCATE( taut(ips:ipe,jps:jpe), taui(ips:ipe,jps:jpe), tauj(ips:ipe,jps:jpe) )
          DO j = jps, jpe
             DO i = ips, ipe
-               zu_uo = grid%u_phy(i,kps,j) - grid%uoce(i,j)
-               zv_vo = grid%v_phy(i,kps,j) - grid%voce(i,j)
-               zspd = MAX( SQRT( zu_uo**2 + zv_vo**2 ), 1.e-7 )
+               zspd(i,j) = MAX( SQRT( u_uo(i,j)**2 + v_vo(i,j)**2 ), 1.e-7 )
                taut(i,j) = grid%rho(i,kps,j) * grid%ust(i,j)**2
                ztmp = taut(i,j) / zspd
-               taui(i,j) = ztmp * zu_uo
-               tauj(i,j) = ztmp * zv_vo
+               taui(i,j) = ztmp * u_uo(i,j)
+               tauj(i,j) = ztmp * v_vo(i,j)
             END DO
          END DO
       END IF
 
-      ! TAUX / TAUY : Surface zonal / meridional wind stress at atmosphere-ocean interface (N m-2)
+      ! TAUX and TAUY : Surface zonal / meridional wind stress at atmosphere-ocean interface (N m-2)
       !--------------------------------------------------------------------------------------------------
       ifldidu     = cpl_get_fldid( 'TAUX' )
       ifldidv     = cpl_get_fldid( 'TAUY' )
@@ -456,7 +484,7 @@ CONTAINS
          CALL cpl_sndfield( grid%id, lltosend, ifldidv, tauj )
       END IF
       
-      ! TAUE / TAUN : Eastward / Northward surface wind stress at atmosphere-ocean interface (N m-2)
+      ! TAUE and TAUN : Eastward / Northward surface wind stress at atmosphere-ocean interface (N m-2)
       !--------------------------------------------------------------------------------------------------
       ifldidu     = cpl_get_fldid( 'TAUE' )
       ifldidv     = cpl_get_fldid( 'TAUN' )
@@ -477,9 +505,47 @@ CONTAINS
       IF ( COUNT(lltosend) > 0 ) THEN 
          CALL cpl_sndfield( grid%id, lltosend, ifldid, taut )
       END IF
+
+      ! WINDX_01 and WINDY_01 : 1st level zonal / meridional wind speed (m S-1)
+      !--------------------------------------------------------------------------------------------------
+      ifldidu     = cpl_get_fldid( 'WINDX_01' )
+      ifldidv     = cpl_get_fldid( 'WINDY_01' )
+      lltosend(:) = cpl_tosend( grid%id, ifldidu, max_edom ) .AND. cpl_tosend( grid%id, ifldidv, max_edom )
+      IF ( COUNT(lltosend) > 0 ) THEN
+         CALL cpl_sndfield( grid%id, lltosend, ifldidu, u_uo )
+         CALL cpl_sndfield( grid%id, lltosend, ifldidv, v_vo )
+      END IF
+
+      ! WINDE_01 and WINDN_01 : Eastward / Northward 1st level wind speed (m s-1)
+      !--------------------------------------------------------------------------------------------------
+      ifldidu     = cpl_get_fldid( 'WINDE_01' )
+      ifldidv     = cpl_get_fldid( 'WINDN_01' )
+      lltosend(:) = cpl_tosend( grid%id, ifldidu, max_edom ) .AND. cpl_tosend( grid%id, ifldidv, max_edom )
+      IF ( COUNT(lltosend) > 0 ) THEN
+         cplsnd(ips:ipe,jps:jpe) = grid%cosa(ips:ipe,jps:jpe) * u_uo(ips:ipe,jps:jpe)   &
+            &                    - grid%sina(ips:ipe,jps:jpe) * v_vo(ips:ipe,jps:jpe)
+         CALL cpl_sndfield( grid%id, lltosend, ifldidu, cplsnd )
+         cplsnd(ips:ipe,jps:jpe) = grid%cosa(ips:ipe,jps:jpe) * v_vo(ips:ipe,jps:jpe)   &
+            &                    + grid%sina(ips:ipe,jps:jpe) * u_uo(ips:ipe,jps:jpe)
+         CALL cpl_sndfield( grid%id, lltosend, ifldidv, cplsnd )
+      END IF
+ 
+      !
+      !=========================================================================================================
+      ! Others
+      !=========================================================================================================
+      !
+      ! Pressure reduced at the sea level (Pa)
+      !--------------------------------------------------------------------------------------------------
+      ifldid      = cpl_get_fldid( 'PSFC' )
+      lltosend(:) = cpl_tosend( grid%id, ifldid, max_edom )
+      IF ( COUNT(lltosend) > 0 ) THEN 
+         CALL cpl_sndfield( grid%id, lltosend, ifldid, grid%PSFC(ips:ipe,jps:jpe) )
+      END IF
       
       DEALLOCATE( cplsnd, lltosend )
-      IF( ALLOCATED(taut) )   DEALLOCATE(taut, taui,tauj)
+      IF( ALLOCATED(u_uo) )   DEALLOCATE(u_uo, v_vo)
+      IF( ALLOCATED(taut) )   DEALLOCATE(taut, taui, tauj)
 #endif       
    END SUBROUTINE cpl_snd
 
@@ -511,7 +577,7 @@ CONTAINS
       &                ids, ide, jds, jde, kds, kde, &
       &                ims, ime, jms, jme, kms, kme, &
       &                ips, ipe, jps, jpe, kps, kpe, &
-      &                max_edom, pcplmask, pdatacpl, pdataobs )
+      &                max_edom, pcplmask, pdatacpl, pdataobs, cst )
       !!-------------------------------------------------------------------
       !!             ***  SUBROUTINE cpl_rcv  ***
       !!
@@ -526,6 +592,7 @@ CONTAINS
       REAL, DIMENSION( ims:ime, 1:max_edom, jms:jme ),           INTENT(IN   ) :: pcplmask    ! coupling mask
       REAL, DIMENSION( ims:ime,             jms:jme ),           INTENT(  OUT) :: pdatacpl    ! coupling data
       REAL, DIMENSION( ims:ime,             jms:jme ), OPTIONAL, INTENT(IN   ) :: pdataobs    ! observed data to be merged
+      REAL,                                            OPTIONAL, INTENT(IN   ) :: cst         ! constant value to be merged
       !
       INTEGER :: jext                                ! external domain index
       INTEGER :: ifldid                              ! field index
@@ -549,6 +616,8 @@ CONTAINS
             IF( lltorcv(jext) )   obsmsk(ips:ipe,jps:jpe) = obsmsk(ips:ipe,jps:jpe) - pcplmask(ips:ipe,jext,jps:jpe)
          END DO
          pdatacpl(ips:ipe,jps:jpe) = pdataobs(ips:ipe,jps:jpe) * obsmsk(ips:ipe,jps:jpe)
+      ELSE IF( PRESENT(cst) ) THEN
+         pdatacpl(ips:ipe,jps:jpe) = cst   ! default value: consider that pdataobs = cst
       ELSE 
          pdatacpl(ips:ipe,jps:jpe) = 0.0   ! default value: consider that pdataobs = 0.
       END IF
@@ -657,6 +726,7 @@ CONTAINS
 
    SUBROUTINE cpl_rcv_sfcdrv( kdomwrf, max_edom, CPLMASK, COSA, SINA,  &
       &                       SST_INPUT, SST, UOCE, VOCE,              &
+      &                       CHA_COEF,                                &
       &                       ids, ide, jds, jde, kds, kde,            &
       &                       ims, ime, jms, jme, kms, kme,            &
       &                       ips, ipe, jps, jpe, kps, kpe )
@@ -671,6 +741,7 @@ CONTAINS
       !-- SST_INPUT     sea-surface temperature read in wrflowinput (K) (= SST if no coupling)
       !-- UOCE          sea surface zonal currents (m s-1)
       !-- VOCE          sea surface meridional currents (m s-1)
+      !-- CHA_COEF      charnock coefficient from wave model ()
       !!--------------------------------------------------------------------
       INTEGER,                                         INTENT(IN   ) ::   kdomwrf   ! wrf domain index
       INTEGER,                                         INTENT(IN   ) ::   max_edom    ! max number of external model domains
@@ -683,13 +754,20 @@ CONTAINS
       REAL, DIMENSION( ims:ime,             jms:jme ), INTENT(  OUT) ::   SST
       REAL, DIMENSION( ims:ime,             jms:jme ), INTENT(  OUT) ::   UOCE
       REAL, DIMENSION( ims:ime,             jms:jme ), INTENT(  OUT) ::   VOCE
+      REAL, DIMENSION( ims:ime,             jms:jme ), INTENT(  OUT) ::   CHA_COEF
       !!--------------------------------------------------------------------
 
       CALL cpl_rcv( kdomwrf, 'SST',                   &
          &              ids, ide, jds, jde, kds, kde, &
          &              ims, ime, jms, jme, kms, kme, &
          &              ips, ipe, jps, jpe, kps, kpe, &
-         &              max_edom, CPLMASK, SST, SST_INPUT )
+         &              max_edom, CPLMASK, SST, pdataobs = SST_INPUT )
+
+      CALL cpl_rcv( kdomwrf, 'CHA_COEF',              &
+         &              ids, ide, jds, jde, kds, kde, &
+         &              ims, ime, jms, jme, kms, kme, &
+         &              ips, ipe, jps, jpe, kps, kpe, &
+         &              max_edom, CPLMASK, CHA_COEF, cst = 0.0185 )
       
       CALL cpl_rcv_vector( kdomwrf, 'UOCE', 'VOCE', 'EOCE', 'NOCE',   &
          &              ids, ide, jds, jde, kds, kde,                 &
