@@ -361,7 +361,7 @@ CONTAINS
          CALL cpl_sndfield( grid%id, lltosend, ifldid, cplsnd )
       END IF
       
-      ! TOTAL_EVAP : total solid precipitation (kg/m2/s = mm/s, positive upward)
+      ! TOTAL_EVAP : total evaporation (evap + sublimation, kg/m2/s = mm/s, positive upward)
       !--------------------------------------------------------------------------------------------------
       ifldid      = cpl_get_fldid( 'TOTAL_EVAP' )
       lltosend(:) = cpl_tosend( grid%id, ifldid, max_edom )
@@ -369,7 +369,7 @@ CONTAINS
          CALL cpl_sndfield( grid%id, lltosend, ifldid, grid%QFX(ips:ipe,jps:jpe) )
       END IF
       
-      ! EVAP - PRECIP : total net liquid+solide water fluw (kg/m2/s = mm/s, positive upward)
+      ! EVAP - PRECIP : total net fresh water water flux (kg/m2/s = mm/s, positive upward)
       !--------------------------------------------------------------------------------------------------
       ifldid      = cpl_get_fldid( 'EVAP-PRECIP' )
       lltosend(:) = cpl_tosend( grid%id, ifldid, max_edom )
@@ -608,18 +608,18 @@ CONTAINS
 
       IF( COUNT(lltorcv) == 0 ) RETURN   ! none of the external models sends this variable
          
+      ! build "observation mask" for this variable
+      !    => 1. - SUM( cplmask of involved external model(s) for this specific variable ) 
+      obsmsk(ips:ipe,jps:jpe) = 1.0
+      DO jext = 1, max_edom
+         IF( lltorcv(jext) )   obsmsk(ips:ipe,jps:jpe) = obsmsk(ips:ipe,jps:jpe) - pcplmask(ips:ipe,jext,jps:jpe)
+      END DO
       IF( PRESENT(pdataobs) ) THEN
-         ! build "observation mask" for this variable
-         !    => 1. - SUM( cplmask of involved external model(s) for this specific variable ) 
-         obsmsk(ips:ipe,jps:jpe) = 1.0
-         DO jext = 1, max_edom
-            IF( lltorcv(jext) )   obsmsk(ips:ipe,jps:jpe) = obsmsk(ips:ipe,jps:jpe) - pcplmask(ips:ipe,jext,jps:jpe)
-         END DO
          pdatacpl(ips:ipe,jps:jpe) = pdataobs(ips:ipe,jps:jpe) * obsmsk(ips:ipe,jps:jpe)
       ELSE IF( PRESENT(cst) ) THEN
-         pdatacpl(ips:ipe,jps:jpe) = cst   ! default value: consider that pdataobs = cst
+         pdatacpl(ips:ipe,jps:jpe) = cst                       * obsmsk(ips:ipe,jps:jpe)   ! cst value instead of pdataobs
       ELSE 
-         pdatacpl(ips:ipe,jps:jpe) = 0.0   ! default value: consider that pdataobs = 0.
+         pdatacpl(ips:ipe,jps:jpe) = 0.0                                                   ! default value: 0.
       END IF
 
       DO jext = 1, max_edom
