@@ -887,7 +887,7 @@ CONTAINS
 
 ! bai =========================================================
 !       IF ( VEGTYP == ISICE_TABLE ) THEN
-       IF(IVGTYP(I,J)==ISICE_TABLE .AND. XICE(I,J) <= 0.0) THEN
+       IF(IVGTYP(I,J)==ISICE_TABLE .AND. XICE(I,J) < XICE_THRES) THEN
 !==============================================================
          ICE = -1                           ! Land-ice point
          CALL NOAHMP_OPTIONS_GLACIER(IOPT_ALB  ,IOPT_SNF  ,IOPT_TBOT, IOPT_STC, IOPT_GLA )

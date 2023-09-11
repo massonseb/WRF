@@ -1543,14 +1543,6 @@ CONTAINS
 !!$      call wrf_error_fatal("Field SNOWSI not found in input.  Field SNOWSI is required if SEAICE_SNOWDEPTH_OPT=1")
 !!$   endif
 
-   DO ij = 1 , num_tiles
-      DO j=j_start(ij),j_end(ij)
-         DO i=i_start(ij),i_end(ij)
-            XICEM(i,j) = XICE(i,j)   ! save previous time-step xice into xicem
-         ENDDO
-      ENDDO
-   ENDDO
-
   IF ( coupler_on .and. present(cplmask) .and. present(sst_input) ) THEN
      
      CALL cpl_rcv( id, 'SST',            &
@@ -4567,6 +4559,14 @@ CONTAINS
      ENDIF
 
    ENDIF
+
+   DO ij = 1 , num_tiles
+      DO j=j_start(ij),j_end(ij)
+         DO i=i_start(ij),i_end(ij)
+            XICEM(i,j) = XICE(i,j)   ! save previous time-step xice into xicem
+         ENDDO
+      ENDDO
+   ENDDO
 
    END SUBROUTINE surface_driver
 
