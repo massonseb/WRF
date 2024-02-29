@@ -848,7 +848,10 @@ BENCH_START(rk_tend_tim)
                          ,grid%i_start(ij), grid%i_end(ij)                                                     &
                          ,grid%j_start(ij), grid%j_end(ij)                                                     &
                          ,k_start, k_end                                                                       &
-                         ,max_vert_cfl_tmp(ij), max_horiz_cfl_tmp(ij)                                         )
+                         ,max_vert_cfl_tmp(ij), max_horiz_cfl_tmp(ij)                                          &
+                         ,curr_secs2, grid%rv_tend_adv , grid%rv_tend_hpg , grid%rv_tend_cor                   &
+                         ,            grid%rv_tend_curv, grid%rv_tend_hdif                                     &
+                         )
      END DO
      !$OMP END PARALLEL DO
 BENCH_END(rk_tend_tim)
@@ -914,6 +917,7 @@ BENCH_START(relax_bdy_dry_tim)
                             grid%h_diabatic, grid%mut, grid%msftx,           &
                             grid%msfty, grid%msfux,grid%msfuy,               &
                             grid%msfvx, grid%msfvx_inv, grid%msfvy,          &
+                            config_flags, curr_secs2, grid%rv_tend_vdif,     &
                             ids,ide, jds,jde, kds,kde,                       &
                             ims,ime, jms,jme, kms,kme,                       &
                             ips,ipe, jps,jpe, kps,kpe,                       &

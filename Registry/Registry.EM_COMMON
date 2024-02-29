@@ -219,6 +219,16 @@ i1       real   w_save         ikj     dyn_em      1         Z
 state    real   w_subs         |       dyn_em      1         -      i3rh      "W_SUBS" "large-scale vertical velocity" "m s-1"
 state    real   w_subs_tend    |       dyn_em      1         -      i3rh      "W_SUBS_TEND" "tendency large-scale vertical velocity" "m s-1"
 
+# --------------------------------------------------------------------------------------
+# new tendency variables for dynamical analysis
+# --------------------------------------------------------------------------------------
+state 	 real 	rv_tend_adv 	ikj 	dyn_em 	    1	      Y      -        "RV_TEND_ADV" 	"v-advection tendency"            "m s-2"
+state	 real	rv_tend_hpg	ikj	dyn_em	    1	      Y	     -	      "RV_TEND_HPG"	"v-pressure gradient tendency"	  "m s-2" 
+state	 real	rv_tend_cor	ikj	dyn_em	    1	      Y	     -	      "RV_TEND_COR"	"v-coriolis tendency"		  "m s-2" 
+state	 real	rv_tend_curv	ikj	dyn_em	    1	      Y	     -	      "RV_TEND_CURV"	"v curvature gradient tendency"	  "m s-2" 
+state	 real	rv_tend_hdif	ikj	dyn_em	    1	      Y	     -	      "RV_TEND_HDIF"	"v horizontal diffusion tendency" "m s-2"
+state	 real	rv_tend_vdif	ikj	dyn_em	    1	      Y	     -	      "RV_TEND_VDIF"	"v vertical diffusion tendency"	  "m s-2" 
+
 # Geopotential
 state    real   ph             ikjb     dyn_em      2         Z     \
        irhusdf=(bdy_interp:dt)   "ph"   "perturbation geopotential"  "m2 s-2"

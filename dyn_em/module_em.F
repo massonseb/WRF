@@ -214,7 +214,9 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
                          ids, ide, jds, jde, kds, kde,                    &
                          ims, ime, jms, jme, kms, kme,                    &
                          its, ite, jts, jte, kts, kte,                    &
-                         max_vert_cfl, max_horiz_cfl)
+                         max_vert_cfl, max_horiz_cfl,                     &
+                         curr_secs2 , rv_tend_adv , rv_tend_hpg ,         &
+                         rv_tend_cor, rv_tend_curv, rv_tend_hdif)
 
    IMPLICIT NONE
 
@@ -279,6 +281,13 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
                                                          ph_tendf, &
                                                          cqw
 
+   REAL , DIMENSION( ims:ime , kms:kme, jms:jme  ) ,                   &
+                                        INTENT(INOUT) :: rv_tend_adv , &
+                                                         rv_tend_hpg , &
+                                                         rv_tend_cor , &
+                                                         rv_tend_curv, &
+                                                         rv_tend_hdif
+
    REAL , DIMENSION( ims:ime , jms:jme ) ,         INTENT(  OUT) :: mu_tend, &
                                                                     mu_save
 
@@ -333,6 +342,7 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
 
    REAL, INTENT( OUT ) :: max_horiz_cfl
    REAL, INTENT( OUT ) :: max_vert_cfl
+   REAL, INTENT( IN  ) :: curr_secs2
 
    REAL    :: kdift, khdq, kvdq, cfn, cfn1, cf1, cf2, cf3
    INTEGER :: i,j,k
@@ -340,6 +350,7 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
    INTEGER :: rk_order
    REAL    :: dt_step
 
+   REAL , DIMENSION( ims:ime, kms:kme, jms:jme ) :: rv_tend_old
 ! IEVA declarations
    REAL , DIMENSION( ims:ime, kms:kme, jms:jme ) :: wwE, wwI  
    REAL , DIMENSION( ims:ime , jms:jme )         :: mut_old, mut_new                                                              
@@ -543,6 +554,10 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
 
    ELSE
 
+     IF( rk_step == rk_order ) THEN
+        rv_tend_old = rv_tend
+        IF( MOD(NINT(curr_secs2),3600) .EQ. 0 ) rv_tend_adv = 0
+     ENDIF
      CALL advect_v ( v, v , rv_tend, ru, rv, wwE,  &
                      c1h, c2h,                     &
                      mut, time_step, config_flags, &
@@ -552,6 +567,11 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
                      ids, ide, jds, jde, kds, kde, &
                      ims, ime, jms, jme, kms, kme, &
                      its, ite, jts, jte, kts, kte )
+     IF( rk_step == rk_order ) THEN
+        DO j = jts,jte   ;   DO k = kts,kte   ;   DO i = its,ite
+           rv_tend_adv(i,k,j) = rv_tend_adv(i,k,j) + ( rv_tend(i,k,j) - rv_tend_old(i,k,j) ) / muv(i,j)
+        ENDDO   ;   ENDDO   ;   ENDDO
+     ENDIF
    ENDIF
 
    IF( ieva ) THEN
@@ -714,6 +734,10 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
      
    ENDIF  ! IEVA
 
+   IF( rk_step == rk_order ) THEN
+      rv_tend_old = rv_tend
+      IF( MOD(NINT(curr_secs2),3600) .EQ. 0 ) rv_tend_hpg = 0
+   ENDIF
    CALL horizontal_pressure_gradient( ru_tend,rv_tend,                 &
                                        ph,alt,p,pb,al,php,cqu,cqv,     &
                                        muu,muv,mu,c1h,c2h,fnm,fnp,rdnw,&
@@ -725,6 +749,11 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
                                        ids, ide, jds, jde, kds, kde,   &
                                        ims, ime, jms, jme, kms, kme,   &
                                        its, ite, jts, jte, kts, kte   )
+   IF( rk_step == rk_order ) THEN
+      DO j = jts,jte   ;   DO k = kts,kte   ;   DO i = its,ite
+         rv_tend_hpg(i,k,j) = rv_tend_hpg(i,k,j) + ( rv_tend(i,k,j) - rv_tend_old(i,k,j) ) / muv(i,j)
+      ENDDO   ;   ENDDO   ;   ENDDO
+   ENDIF
 
    IF (non_hydrostatic) THEN
         CALL pg_buoy_w( rw_tend, p, cqw, mu, mub,       &
@@ -758,6 +787,11 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
                                      ims, ime, jms, jme, kms, kme, &
                                      its, ite, jts, jte, kts, kte )
    ELSE
+
+        IF( rk_step == rk_order ) THEN
+           rv_tend_old = rv_tend
+           IF( MOD(NINT(curr_secs2),3600) .EQ. 0 ) rv_tend_cor = 0
+        ENDIF
         CALL coriolis ( ru, rv, rw,                   &
                         ru_tend,  rv_tend,  rw_tend,  &
                         config_flags,                 &
@@ -767,9 +801,18 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
                         ids, ide, jds, jde, kds, kde, &
                         ims, ime, jms, jme, kms, kme, &
                         its, ite, jts, jte, kts, kte )
+        IF( rk_step == rk_order ) THEN
+           DO j = jts,jte   ;   DO k = kts,kte   ;   DO i = its,ite
+              rv_tend_cor(i,k,j) = rv_tend_cor(i,k,j) + ( rv_tend(i,k,j) - rv_tend_old(i,k,j) ) / muv(i,j)
+           ENDDO   ;   ENDDO   ;   ENDDO
+        ENDIF
 
    END IF
 
+   IF( rk_step == rk_order ) THEN
+      rv_tend_old = rv_tend
+      IF( MOD(NINT(curr_secs2),3600) .EQ. 0 ) rv_tend_curv = 0
+   ENDIF
    CALL curvature ( ru, rv, rw, u, v, w,            &
                      ru_tend,  rv_tend,  rw_tend,    &
                      config_flags,                   &
@@ -779,6 +822,11 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
                      ids, ide, jds, jde, kds, kde,   &
                      ims, ime, jms, jme, kms, kme,   &
                      its, ite, jts, jte, kts, kte   )
+   IF( rk_step == rk_order ) THEN
+      DO j = jts,jte   ;   DO k = kts,kte   ;   DO i = its,ite
+         rv_tend_curv(i,k,j) = rv_tend_curv(i,k,j) + ( rv_tend(i,k,j) - rv_tend_old(i,k,j) ) / muv(i,j)
+      ENDDO   ;   ENDDO   ;   ENDDO
+   ENDIF
 
 ! Damping option added for Held-Suarez test (also uses lw option HELDSUAREZ)
 
@@ -810,6 +858,10 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
                                         ims, ime, jms, jme, kms, kme,   &
                                         its, ite, jts, jte, kts, kte   )
 
+        IF( rk_step == rk_order ) THEN
+           rv_tend_old = rv_tendf
+           IF( MOD(NINT(curr_secs2),3600) .EQ. 0 ) rv_tend_hdif = 0
+        ENDIF
         CALL horizontal_diffusion ('v', v, rv_tendf, mut,               &
                                         c1h, c2h, config_flags,         &
                                         msfux, msfuy, msfvx, msfvx_inv, &
@@ -818,6 +870,11 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
                                         ids, ide, jds, jde, kds, kde,   &
                                         ims, ime, jms, jme, kms, kme,   &
                                         its, ite, jts, jte, kts, kte   )
+        IF( rk_step == rk_order ) THEN
+           DO j = jts,jte   ;   DO k = kts,kte   ;   DO i = its,ite
+              rv_tend_hdif(i,k,j) = rv_tend_hdif(i,k,j) + ( rv_tendf(i,k,j) - rv_tend_old(i,k,j) ) / muv(i,j)
+           ENDDO   ;   ENDDO   ;   ENDDO
+        ENDIF
 
         CALL horizontal_diffusion ('w', w, rw_tendf, mut,               &
                                         c1f, c2f, config_flags,         &
@@ -962,6 +1019,7 @@ SUBROUTINE rk_addtend_dry ( ru_tend, rv_tend, rw_tend, ph_tend, t_tend,      &
                             mu_tend, mu_tendf, rk_step, c1, c2,              &
                             h_diabatic, mut, msftx, msfty, msfux, msfuy,     &
                             msfvx, msfvx_inv, msfvy,                         &
+                            config_flags, curr_secs2, rv_tend_vdif,          &
                             ids,ide, jds,jde, kds,kde,                       &
                             ims,ime, jms,jme, kms,kme,                       &
                             ips,ipe, jps,jpe, kps,kpe,                       &
@@ -970,6 +1028,7 @@ SUBROUTINE rk_addtend_dry ( ru_tend, rv_tend, rw_tend, ph_tend, t_tend,      &
    IMPLICIT NONE
 
    !  Input data.
+   TYPE(grid_config_rec_type)    ,           INTENT(IN   ) :: config_flags
 
    INTEGER ,               INTENT(IN   ) :: ids, ide, jds, jde, kds, kde, &
                                             ims, ime, jms, jme, kms, kme, &
@@ -986,7 +1045,7 @@ SUBROUTINE rk_addtend_dry ( ru_tend, rv_tend, rw_tend, ph_tend, t_tend,      &
                                                                       rv_tendf, &
                                                                       rw_tendf, &
                                                                       ph_tendf, &
-                                                                      t_tendf
+                                                                      t_tendf, rv_tend_vdif
 
    REAL , DIMENSION( ims:ime , jms:jme  ) , INTENT(INOUT) :: mu_tend, &
                                                              mu_tendf
@@ -1008,9 +1067,12 @@ SUBROUTINE rk_addtend_dry ( ru_tend, rv_tend, rw_tend, ph_tend, t_tend,      &
                                                                     msfvy
 
    REAL , DIMENSION( kms:kme ) ,         INTENT(IN   ) :: c1, c2
+   REAL, INTENT( IN  ) :: curr_secs2
 
 ! Local
    INTEGER :: i, j, k
+   INTEGER :: rk_order
+   rk_order = config_flags%rk_ord
 
 !<DESCRIPTION>
 !
@@ -1055,6 +1117,12 @@ SUBROUTINE rk_addtend_dry ( ru_tend, rv_tend, rw_tend, ph_tend, t_tend,      &
    ENDDO
    ENDDO
    ENDDO
+   IF( rk_step == rk_order ) THEN
+      IF( MOD(NINT(curr_secs2),3600) .EQ. 0 ) rv_tend_vdif = 0
+      DO j = jts,jte   ;   DO k = kts,kte   ;   DO i = its,ite
+         rv_tend_vdif(i,k,j) = rv_tend_vdif(i,k,j) + rv_tendf(i,k,j)*msfvx_inv(i,j) / mut(i,j)
+      ENDDO   ;   ENDDO   ;   ENDDO
+   ENDIF
 
    DO j = jts,MIN(jte,jde-1)
    DO k = kts,kte
