@@ -969,6 +969,8 @@ BENCH_START(surf_driver_tim)
      &        ,QFX_BOTH=grid%QFX_BOTH,QNORM=grid%QNORM,fasdas=config_flags%fasdas                       &  !fasdas
      &        ,XLAIDYN=grid%XLAIDYN                                                                     &
      &        ,DQDTICE=grid%dqdtice                                                                     &
+     &        ,xice_input=grid%xice_input,icedepth_input=grid%icedepth_input                            &
+     &        ,snowsi_input=grid%snowsi_input,albsi_input=grid%albsi_input                              &
      &        ,spp_lsm=config_flags%spp_lsm,pattern_spp_lsm=grid%pattern_spp_lsm     & !SPP
      &        ,field_sf=grid%field_sf                                                & !SPP
      &        ,spp_pbl=config_flags%spp_pbl,pattern_spp_pbl=grid%pattern_spp_pbl     & !SPP
