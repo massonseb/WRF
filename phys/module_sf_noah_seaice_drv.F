@@ -213,10 +213,10 @@ contains
 
           ! Skip the points that are not sea-ice points.
           IF ( XICE(I,J) < XICE_THRESHOLD ) THEN
-              IF ( SEAICE_THICKNESS_OPT == 1 ) THEN
+              IF ( SEAICE_THICKNESS_OPT > 0 ) THEN
                   ICEDEPTH(I,J) = 0.0
               ENDIF
-              IF ( SEAICE_SNOWDEPTH_OPT == 1 ) THEN
+              IF ( SEAICE_SNOWDEPTH_OPT > 0 ) THEN
                   SNOWSI(I,J) = 0.0
               ENDIF
               DQDTICE(I,J) = 40.   ! DQDTICE is > 0. -DQDTICE is sent in module_cpl
@@ -244,6 +244,9 @@ contains
                   FATAL_ERROR("SEAICE_THICKNESS_OPT")
               ENDIF
               SITHICK = MIN ( MAX ( 0.10 , ICEDEPTH(I,J) ) , 10.0 )
+              ICEDEPTH(I,J) = SITHICK
+           CASE (2)
+              SITHICK = XICE(I,J) + 0.25 
               ICEDEPTH(I,J) = SITHICK
           END SELECT
 
@@ -311,6 +314,14 @@ contains
               ! accumulation and melt, we want the snow depth on sea ice to be specified
               ! as SNOWSI (bounded by SEAICE_SNOWDEPTH_MIN and SEAICE_SNOWDEPTH_MAX).
               SNOWONSI = MAX ( SEAICE_SNOWDEPTH_MIN , MIN ( SNOWSI(I,J) , SEAICE_SNOWDEPTH_MAX ) )
+              SNEQV = SNOWONSI * 0.3
+              SNOWH2D(I,J) = SNOWONSI
+
+           CASE ( 2 ) 
+
+              ! Snow depth (SNOWSI) proportional to ICEDEPTH
+              ! and bounded by SEAICE_SNOWDEPTH_MIN and SEAICE_SNOWDEPTH_MAX
+              SNOWONSI = MAX ( SEAICE_SNOWDEPTH_MIN , MIN ( ICEDEPTH(I,J) * 0.3, SEAICE_SNOWDEPTH_MAX ) )
               SNEQV = SNOWONSI * 0.3
               SNOWH2D(I,J) = SNOWONSI
 
@@ -467,7 +478,7 @@ contains
           ! Convert QSFC term back to Mixing Ratio.
           QSFC(I,J)   = Q1 / ( 1.0 - Q1 )
 
-          IF ( SEAICE_SNOWDEPTH_OPT == 1 ) THEN
+          IF ( SEAICE_SNOWDEPTH_OPT > 0 ) THEN
               SNOWSI(I,J) = SNOWONSI
           ENDIF
 

@@ -271,7 +271,7 @@ CONTAINS
           SNOWH = MAX ( SEAICE_SNOWDEPTH_MIN , MIN ( SNOWH , SEAICE_SNOWDEPTH_MAX ) )
           SNEQV = SNOWH * SNDENS 
 
-      ELSEIF ( SEAICE_SNOWDEPTH_OPT == 1 ) THEN
+      ELSE
 
           !
           ! Regardless of the assignments above, we want to enforce
@@ -501,7 +501,7 @@ CONTAINS
           SNOWH = MAX ( SEAICE_SNOWDEPTH_MIN , MIN ( SNOWH , SEAICE_SNOWDEPTH_MAX ) )
           SNEQV = SNOWH * SNDENS 
 
-      ELSEIF ( SEAICE_SNOWDEPTH_OPT == 1 ) THEN
+      ELSE
 
           !
           ! Regardless of the results of snopac, we want to enforce

@@ -2795,13 +2795,13 @@ integer::oops1,oops2
           grid%ifndalbsi = 0
       ENDIF
           
-      IF ( config_flags%seaice_snowdepth_opt == 1 ) THEN
+      IF ( config_flags%seaice_snowdepth_opt > 0 ) THEN
           grid%ifndsnowsi = flag_snowsi
       ELSE
           grid%ifndsnowsi = 0
       ENDIF
           
-      IF ( config_flags%seaice_thickness_opt == 1 ) THEN
+      IF ( config_flags%seaice_thickness_opt > 0 ) THEN
           grid%ifndicedepth = flag_icedepth
       ELSE
           grid%ifndicedepth = 0

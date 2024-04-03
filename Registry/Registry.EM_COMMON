@@ -3248,9 +3248,11 @@ package   albsi_two      seaice_albedo_opt==2        -             state:albsi
 
 package   snowsi_zero    seaice_snowdepth_opt==0     -             -
 package   snowsi_one     seaice_snowdepth_opt==1     -             state:snowsi
+package   snowsi_two     seaice_snowdepth_opt==2     -             state:snowsi
 
 package   icedepth_zero  seaice_thickness_opt==0     -             -
 package   icedepth_one   seaice_thickness_opt==1     -             state:icedepth
+package   icedepth_two   seaice_thickness_opt==2     -             state:icedepth
 
 #Time series options for text output
 package   notseries             process_time_series==0                 -             -
