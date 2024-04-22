@@ -556,7 +556,7 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
 
      IF( rk_step == rk_order ) THEN
         rv_tend_old = rv_tend
-        IF( MOD(NINT(curr_secs2),3600) .EQ. 0 ) rv_tend_adv = 0
+        IF( MOD(NINT(curr_secs2),config_flags%tend_window) .EQ. 0 ) rv_tend_adv = 0
      ENDIF
      CALL advect_v ( v, v , rv_tend, ru, rv, wwE,  &
                      c1h, c2h,                     &
@@ -736,7 +736,7 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
 
    IF( rk_step == rk_order ) THEN
       rv_tend_old = rv_tend
-      IF( MOD(NINT(curr_secs2),3600) .EQ. 0 ) rv_tend_hpg = 0
+      IF( MOD(NINT(curr_secs2),config_flags%tend_window) .EQ. 0 ) rv_tend_hpg = 0
    ENDIF
    CALL horizontal_pressure_gradient( ru_tend,rv_tend,                 &
                                        ph,alt,p,pb,al,php,cqu,cqv,     &
@@ -790,7 +790,7 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
 
         IF( rk_step == rk_order ) THEN
            rv_tend_old = rv_tend
-           IF( MOD(NINT(curr_secs2),3600) .EQ. 0 ) rv_tend_cor = 0
+           IF( MOD(NINT(curr_secs2),config_flags%tend_window) .EQ. 0 ) rv_tend_cor = 0
         ENDIF
         CALL coriolis ( ru, rv, rw,                   &
                         ru_tend,  rv_tend,  rw_tend,  &
@@ -811,7 +811,7 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
 
    IF( rk_step == rk_order ) THEN
       rv_tend_old = rv_tend
-      IF( MOD(NINT(curr_secs2),3600) .EQ. 0 ) rv_tend_curv = 0
+      IF( MOD(NINT(curr_secs2),config_flags%tend_window) .EQ. 0 ) rv_tend_curv = 0
    ENDIF
    CALL curvature ( ru, rv, rw, u, v, w,            &
                      ru_tend,  rv_tend,  rw_tend,    &
@@ -860,7 +860,7 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
 
         IF( rk_step == rk_order ) THEN
            rv_tend_old = rv_tendf
-           IF( MOD(NINT(curr_secs2),3600) .EQ. 0 ) rv_tend_hdif = 0
+           IF( MOD(NINT(curr_secs2),config_flags%tend_window) .EQ. 0 ) rv_tend_hdif = 0
         ENDIF
         CALL horizontal_diffusion ('v', v, rv_tendf, mut,               &
                                         c1h, c2h, config_flags,         &
@@ -1111,14 +1111,14 @@ SUBROUTINE rk_addtend_dry ( ru_tend, rv_tend, rw_tend, ph_tend, t_tend,      &
    DO k = kts,kte-1
    DO i = its,MIN(ite,ide-1)
      ! multiply by mx to uncouple v
-     IF(rk_step == 1)rv_tendf(i,k,j) = rv_tendf(i,k,j) +  v_save(i,k,j)*msfvx(i,j)
+     IF(rk_step == 1)rv_tendf(i,k,j) = rv_tendf(i,k,j) + v_save(i,k,j)*msfvx(i,j)
      ! divide by mx to couple v
      rv_tend(i,k,j) = rv_tend(i,k,j) + rv_tendf(i,k,j)*msfvx_inv(i,j)
    ENDDO
    ENDDO
    ENDDO
    IF( rk_step == rk_order ) THEN
-      IF( MOD(NINT(curr_secs2),3600) .EQ. 0 ) rv_tend_vdif = 0
+      IF( MOD(NINT(curr_secs2),config_flags%tend_window) .EQ. 0 ) rv_tend_vdif = 0
       DO j = jts,jte   ;   DO k = kts,kte   ;   DO i = its,ite
          rv_tend_vdif(i,k,j) = rv_tend_vdif(i,k,j) + rv_tendf(i,k,j)*msfvx_inv(i,j) / mut(i,j)
       ENDDO   ;   ENDDO   ;   ENDDO

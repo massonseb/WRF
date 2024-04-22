@@ -2802,6 +2802,7 @@ rconfig   integer scm_force_flux          namelist,scm  1       0           rh  
 
 # Dynamics
 # dynamics option (see package definitions, below)
+rconfig   integer tend_window             namelist,dynamics	1             3600 
 rconfig   integer dyn_opt                 namelist,dynamics	1             2 
 rconfig   integer rk_ord                  namelist,dynamics	1             3       irh   "rk_order"               ""      ""
 rconfig   integer w_damping               namelist,dynamics	1             0       irh   "w_damping"              ""      ""
