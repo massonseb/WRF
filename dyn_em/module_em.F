@@ -569,7 +569,7 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
                      its, ite, jts, jte, kts, kte )
      IF( rk_step == rk_order ) THEN
         DO j = jts,jte   ;   DO k = kts,kte   ;   DO i = its,ite
-           rv_tend_adv(i,k,j) = rv_tend_adv(i,k,j) + ( rv_tend(i,k,j) - rv_tend_old(i,k,j) ) / muv(i,j)
+           rv_tend_adv(i,k,j) = rv_tend_adv(i,k,j) + ( rv_tend(i,k,j) - rv_tend_old(i,k,j) ) / muv(i,j) * msfvx(i,j) * dt
         ENDDO   ;   ENDDO   ;   ENDDO
      ENDIF
    ENDIF
@@ -751,7 +751,7 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
                                        its, ite, jts, jte, kts, kte   )
    IF( rk_step == rk_order ) THEN
       DO j = jts,jte   ;   DO k = kts,kte   ;   DO i = its,ite
-         rv_tend_hpg(i,k,j) = rv_tend_hpg(i,k,j) + ( rv_tend(i,k,j) - rv_tend_old(i,k,j) ) / muv(i,j)
+         rv_tend_hpg(i,k,j) = rv_tend_hpg(i,k,j) + ( rv_tend(i,k,j) - rv_tend_old(i,k,j) ) / muv(i,j) * msfvx(i,j) * dt
       ENDDO   ;   ENDDO   ;   ENDDO
    ENDIF
 
@@ -803,7 +803,7 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
                         its, ite, jts, jte, kts, kte )
         IF( rk_step == rk_order ) THEN
            DO j = jts,jte   ;   DO k = kts,kte   ;   DO i = its,ite
-              rv_tend_cor(i,k,j) = rv_tend_cor(i,k,j) + ( rv_tend(i,k,j) - rv_tend_old(i,k,j) ) / muv(i,j)
+              rv_tend_cor(i,k,j) = rv_tend_cor(i,k,j) + ( rv_tend(i,k,j) - rv_tend_old(i,k,j) ) / muv(i,j) * msfvx(i,j) * dt
            ENDDO   ;   ENDDO   ;   ENDDO
         ENDIF
 
@@ -824,7 +824,7 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
                      its, ite, jts, jte, kts, kte   )
    IF( rk_step == rk_order ) THEN
       DO j = jts,jte   ;   DO k = kts,kte   ;   DO i = its,ite
-         rv_tend_curv(i,k,j) = rv_tend_curv(i,k,j) + ( rv_tend(i,k,j) - rv_tend_old(i,k,j) ) / muv(i,j)
+         rv_tend_curv(i,k,j) = rv_tend_curv(i,k,j) + ( rv_tend(i,k,j) - rv_tend_old(i,k,j) ) / muv(i,j) * msfvx(i,j) * dt
       ENDDO   ;   ENDDO   ;   ENDDO
    ENDIF
 
@@ -872,7 +872,7 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
                                         its, ite, jts, jte, kts, kte   )
         IF( rk_step == rk_order ) THEN
            DO j = jts,jte   ;   DO k = kts,kte   ;   DO i = its,ite
-              rv_tend_hdif(i,k,j) = rv_tend_hdif(i,k,j) + ( rv_tendf(i,k,j) - rv_tend_old(i,k,j) ) / muv(i,j)
+              rv_tend_hdif(i,k,j) = rv_tend_hdif(i,k,j) + ( rv_tendf(i,k,j) - rv_tend_old(i,k,j) ) / muv(i,j) * msfvx(i,j) * dt
            ENDDO   ;   ENDDO   ;   ENDDO
         ENDIF
 
@@ -1019,7 +1019,7 @@ SUBROUTINE rk_addtend_dry ( ru_tend, rv_tend, rw_tend, ph_tend, t_tend,      &
                             mu_tend, mu_tendf, rk_step, c1, c2,              &
                             h_diabatic, mut, msftx, msfty, msfux, msfuy,     &
                             msfvx, msfvx_inv, msfvy,                         &
-                            config_flags, curr_secs2, rv_tend_vdif,          &
+                            config_flags, curr_secs2, dt, rv_tend_vdif,    &
                             ids,ide, jds,jde, kds,kde,                       &
                             ims,ime, jms,jme, kms,kme,                       &
                             ips,ipe, jps,jpe, kps,kpe,                       &
@@ -1035,6 +1035,7 @@ SUBROUTINE rk_addtend_dry ( ru_tend, rv_tend, rw_tend, ph_tend, t_tend,      &
                                             ips, ipe, jps, jpe, kps, kpe, &
                                             its, ite, jts, jte, kts, kte
    INTEGER ,               INTENT(IN   ) :: rk_step
+   REAL    ,               INTENT(IN   ) :: dt
 
    REAL , DIMENSION( ims:ime , kms:kme, jms:jme  ) , INTENT(INOUT) :: ru_tend, &
                                                                       rv_tend, &
@@ -1120,7 +1121,7 @@ SUBROUTINE rk_addtend_dry ( ru_tend, rv_tend, rw_tend, ph_tend, t_tend,      &
    IF( rk_step == rk_order ) THEN
       IF( MOD(NINT(curr_secs2),config_flags%tend_window) .EQ. 0 ) rv_tend_vdif = 0
       DO j = jts,jte   ;   DO k = kts,kte   ;   DO i = its,ite
-         rv_tend_vdif(i,k,j) = rv_tend_vdif(i,k,j) + rv_tendf(i,k,j)*msfvx_inv(i,j) / mut(i,j)
+         rv_tend_vdif(i,k,j) = rv_tend_vdif(i,k,j) + rv_tendf(i,k,j) / mut(i,j) * dt
       ENDDO   ;   ENDDO   ;   ENDDO
    ENDIF
 
