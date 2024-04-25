@@ -858,10 +858,8 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
                                         ims, ime, jms, jme, kms, kme,   &
                                         its, ite, jts, jte, kts, kte   )
 
-        IF( rk_step == rk_order ) THEN
-           rv_tend_old = rv_tendf
-           IF( MOD(NINT(curr_secs2),config_flags%tend_window) .EQ. 0 ) rv_tend_hdif = 0
-        ENDIF
+        rv_tend_old = rv_tendf
+        IF( MOD(NINT(curr_secs2),config_flags%tend_window) .EQ. 0 ) rv_tend_hdif = 0
         CALL horizontal_diffusion ('v', v, rv_tendf, mut,               &
                                         c1h, c2h, config_flags,         &
                                         msfux, msfuy, msfvx, msfvx_inv, &
@@ -870,11 +868,9 @@ SUBROUTINE rk_tendency ( config_flags, rk_step,                           &
                                         ids, ide, jds, jde, kds, kde,   &
                                         ims, ime, jms, jme, kms, kme,   &
                                         its, ite, jts, jte, kts, kte   )
-        IF( rk_step == rk_order ) THEN
-           DO j = jts,jte   ;   DO k = kts,kte   ;   DO i = its,ite
-              rv_tend_hdif(i,k,j) = rv_tend_hdif(i,k,j) + ( rv_tendf(i,k,j) - rv_tend_old(i,k,j) ) / muv(i,j) * msfvx(i,j) * dt
-           ENDDO   ;   ENDDO   ;   ENDDO
-        ENDIF
+        DO j = jts,jte   ;   DO k = kts,kte   ;   DO i = its,ite
+           rv_tend_hdif(i,k,j) = rv_tend_hdif(i,k,j) + ( rv_tendf(i,k,j) - rv_tend_old(i,k,j) ) / mut(i,j) * msfvx(i,j) * dt
+        ENDDO   ;   ENDDO   ;   ENDDO
 
         CALL horizontal_diffusion ('w', w, rw_tendf, mut,               &
                                         c1f, c2f, config_flags,         &
