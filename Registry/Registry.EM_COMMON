@@ -222,12 +222,12 @@ state    real   w_subs_tend    |       dyn_em      1         -      i3rh      "W
 # --------------------------------------------------------------------------------------
 # new tendency variables for dynamical analysis
 # --------------------------------------------------------------------------------------
-state 	 real 	rv_tend_adv 	ikj 	dyn_em 	    1	      Y      -        "RV_TEND_ADV" 	"v-advection tendency"            "m s-2"
-state	 real	rv_tend_hpg	ikj	dyn_em	    1	      Y	     -	      "RV_TEND_HPG"	"v-pressure gradient tendency"	  "m s-2" 
-state	 real	rv_tend_cor	ikj	dyn_em	    1	      Y	     -	      "RV_TEND_COR"	"v-coriolis tendency"		  "m s-2" 
-state	 real	rv_tend_curv	ikj	dyn_em	    1	      Y	     -	      "RV_TEND_CURV"	"v curvature gradient tendency"	  "m s-2" 
-state	 real	rv_tend_hdif	ikj	dyn_em	    1	      Y	     -	      "RV_TEND_HDIF"	"v horizontal diffusion tendency" "m s-2"
-state	 real	rv_tend_vdif	ikj	dyn_em	    1	      Y	     -	      "RV_TEND_VDIF"	"v vertical diffusion tendency"	  "m s-2" 
+state 	 real 	rv_tend_adv 	ikj 	dyn_em 	    1	      Y      -        "RV_TEND_ADV" 	"v-advection contribution"                "m s-1"
+state	 real	rv_tend_hpg	ikj	dyn_em	    1	      Y	     -	      "RV_TEND_HPG"	"v-pressure gradient contribution"	  "m s-1" 
+state	 real	rv_tend_cor	ikj	dyn_em	    1	      Y	     -	      "RV_TEND_COR"	"v-coriolis contribution"		  "m s-1" 
+state	 real	rv_tend_curv	ikj	dyn_em	    1	      Y	     -	      "RV_TEND_CURV"	"v curvature gradient contribution"	  "m s-1" 
+state	 real	rv_tend_hdif	ikj	dyn_em	    1	      Y	     -	      "RV_TEND_HDIF"	"v horizontal diffusion contribution"     "m s-1"
+state	 real	rv_tend_phy	ikj	dyn_em	    1	      Y	     -	      "RV_TEND_PHY"	"v physic tendendy contribution"	  "m s-1" 
 
 # Geopotential
 state    real   ph             ikjb     dyn_em      2         Z     \

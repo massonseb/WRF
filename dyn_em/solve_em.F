@@ -918,7 +918,7 @@ BENCH_START(relax_bdy_dry_tim)
                             grid%msfty, grid%msfux,grid%msfuy,               &
                             grid%msfvx, grid%msfvx_inv, grid%msfvy,          &
                             config_flags, curr_secs2, grid%dt,               &
-                            grid%rv_tend_vdif,                               &
+                            grid%rv_tend_phy,                                &
                             ids,ide, jds,jde, kds,kde,                       &
                             ims,ime, jms,jme, kms,kme,                       &
                             ips,ipe, jps,jpe, kps,kpe,                       &

@@ -1015,7 +1015,7 @@ SUBROUTINE rk_addtend_dry ( ru_tend, rv_tend, rw_tend, ph_tend, t_tend,      &
                             mu_tend, mu_tendf, rk_step, c1, c2,              &
                             h_diabatic, mut, msftx, msfty, msfux, msfuy,     &
                             msfvx, msfvx_inv, msfvy,                         &
-                            config_flags, curr_secs2, dt, rv_tend_vdif,    &
+                            config_flags, curr_secs2, dt, rv_tend_phy,       &
                             ids,ide, jds,jde, kds,kde,                       &
                             ims,ime, jms,jme, kms,kme,                       &
                             ips,ipe, jps,jpe, kps,kpe,                       &
@@ -1042,7 +1042,7 @@ SUBROUTINE rk_addtend_dry ( ru_tend, rv_tend, rw_tend, ph_tend, t_tend,      &
                                                                       rv_tendf, &
                                                                       rw_tendf, &
                                                                       ph_tendf, &
-                                                                      t_tendf, rv_tend_vdif
+                                                                      t_tendf, rv_tend_phy
 
    REAL , DIMENSION( ims:ime , jms:jme  ) , INTENT(INOUT) :: mu_tend, &
                                                              mu_tendf
@@ -1115,9 +1115,9 @@ SUBROUTINE rk_addtend_dry ( ru_tend, rv_tend, rw_tend, ph_tend, t_tend,      &
    ENDDO
    ENDDO
    IF( rk_step == rk_order ) THEN
-      IF( MOD(NINT(curr_secs2),config_flags%tend_window) .EQ. 0 ) rv_tend_vdif = 0
+      IF( MOD(NINT(curr_secs2),config_flags%tend_window) .EQ. 0 ) rv_tend_phy = 0
       DO j = jts,jte   ;   DO k = kts,kte   ;   DO i = its,ite
-         rv_tend_vdif(i,k,j) = rv_tend_vdif(i,k,j) + rv_tendf(i,k,j) / mut(i,j) * dt
+         rv_tend_phy(i,k,j) = rv_tend_phy(i,k,j) + rv_tendf(i,k,j) / mut(i,j) * dt
       ENDDO   ;   ENDDO   ;   ENDDO
    ENDIF
 
