@@ -228,6 +228,7 @@ state	 real	rv_tend_cor	ikj	dyn_em	    1	      Y	     -	      "RV_TEND_COR"	"v-c
 state	 real	rv_tend_curv	ikj	dyn_em	    1	      Y	     -	      "RV_TEND_CURV"	"v curvature gradient contribution"	  "m s-1" 
 state	 real	rv_tend_hdif	ikj	dyn_em	    1	      Y	     -	      "RV_TEND_HDIF"	"v horizontal diffusion contribution"     "m s-1"
 state	 real	rv_tend_phy	ikj	dyn_em	    1	      Y	     -	      "RV_TEND_PHY"	"v physic tendendy contribution"	  "m s-1" 
+state	 real	rv_tend_sound	ikj	dyn_em	    1	      Y	     -	      "RV_TEND_SOUND"	"v sound tendendy contribution"	  "m s-1" 
 
 # Geopotential
 state    real   ph             ikjb     dyn_em      2         Z     \

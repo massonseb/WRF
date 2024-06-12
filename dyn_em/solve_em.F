@@ -121,7 +121,7 @@ SUBROUTINE solve_em ( grid , config_flags  &
    
    ! Changes in tendency at this timestep
    real ,DIMENSION(grid%sm31:grid%em31,grid%sm32:grid%em32,grid%sm33:grid%em33) :: h_tendency, &
-                                                                                   z_tendency
+                                                                                   z_tendency, v2_old
                                                                                    
    ! Whether advection should produce decoupled horizontal and vertical advective tendency outputs
    LOGICAL                        :: tenddec
@@ -1210,6 +1210,11 @@ BENCH_START(set_phys_bc2_tim)
      END DO
      !$OMP END PARALLEL DO
 BENCH_END(set_phys_bc2_tim)
+
+     IF ( rk_step .EQ. rk_order ) THEN
+        IF( MOD(NINT(curr_secs2),config_flags%tend_window) .EQ. 0 ) grid%rv_tend_sound = 0.
+     ENDIF
+           
      small_steps : DO iteration = 1 , number_of_small_timesteps
 
        ! Boundary condition time (or communication time).  
@@ -1220,8 +1225,18 @@ BENCH_END(set_phys_bc2_tim)
        !$OMP PARALLEL DO   &
        !$OMP PRIVATE ( ij )
 
-       DO ij = 1 , grid%num_tiles
-
+        DO ij = 1 , grid%num_tiles
+           
+           IF ( rk_step .EQ. rk_order ) THEN
+              DO i = ims, ime
+                 DO k = kms, kme
+                    DO j = jms, jme
+                       v2_old(i,k,j) = grid%v_2(i,k,j)
+                    ENDDO
+                 ENDDO
+              ENDDO
+           ENDIF
+          
 BENCH_START(advance_uv_tim)
          CALL advance_uv ( grid%u_2, grid%ru_tend, grid%v_2, grid%rv_tend,        &
                            grid%p, grid%pb,                                       &
@@ -1243,7 +1258,17 @@ BENCH_START(advance_uv_tim)
                            k_start    , k_end                                     )
 BENCH_END(advance_uv_tim)
 
-       END DO
+         IF ( rk_step .EQ. rk_order ) THEN
+            DO i = ims, ime
+               DO k = kms, kme
+                  DO j = jms, jme
+                     grid%rv_tend_sound(i,k,j) = grid%rv_tend_sound(i,k,j) +       &
+                        ( grid%v_2(i,k,j) - v2_old(i,k,j) - dts_rk * grid%rv_tend(i,k,j) ) / grid%muv(i,j) * grid%msfvx(i,j)
+                  ENDDO
+               ENDDO
+            ENDDO
+         ENDIF
+      END DO
        !$OMP END PARALLEL DO
 
 !-----------------------------------------------------------
