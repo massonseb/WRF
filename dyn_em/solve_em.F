@@ -794,7 +794,7 @@ BENCH_START(calc_p_rho_tim)
                              , rw_tendf, t_tendf                &
                              , ph_tendf, mu_tendf               &
                              , tke_tend                         &
-                             , adapt_step_flag , curr_secs      &
+                             , adapt_step_flag , curr_secs2     &
                              , psim , psih , gz1oz0             &
                              , chklowq                          &
                              , cu_act_flag , hol , th_phy       &
@@ -1225,8 +1225,6 @@ BENCH_END(set_phys_bc2_tim)
        !$OMP PARALLEL DO   &
        !$OMP PRIVATE ( ij )
 
-        DO ij = 1 , grid%num_tiles
-           
            IF ( rk_step .EQ. rk_order ) THEN
               DO i = ims, ime
                  DO k = kms, kme
@@ -1236,8 +1234,9 @@ BENCH_END(set_phys_bc2_tim)
                  ENDDO
               ENDDO
            ENDIF
-          
+           
 BENCH_START(advance_uv_tim)
+      DO ij = 1 , grid%num_tiles
          CALL advance_uv ( grid%u_2, grid%ru_tend, grid%v_2, grid%rv_tend,        &
                            grid%p, grid%pb,                                       &
                            grid%ph_2, grid%php, grid%alt,  grid%al,               &
@@ -1256,6 +1255,8 @@ BENCH_START(advance_uv_tim)
                            grid%i_start(ij), grid%i_end(ij),                      &
                            grid%j_start(ij), grid%j_end(ij),                      &
                            k_start    , k_end                                     )
+      END DO
+       !$OMP END PARALLEL DO
 BENCH_END(advance_uv_tim)
 
          IF ( rk_step .EQ. rk_order ) THEN
@@ -1268,8 +1269,6 @@ BENCH_END(advance_uv_tim)
                ENDDO
             ENDDO
          ENDIF
-      END DO
-       !$OMP END PARALLEL DO
 
 !-----------------------------------------------------------
 !  acoustic integration polar filter for smallstep u, v

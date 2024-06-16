@@ -17,7 +17,7 @@ CONTAINS
                              , rw_tendf, t_tendf                &
                              , ph_tendf, mu_tendf               &
                              , tke_tend                         &
-                             , adapt_step_flag , curr_secs      &
+                             , adapt_step_flag , curr_secs2     &
                              , psim , psih , gz1oz0 , chklowq   &
                              , cu_act_flag , hol , th_phy       &
                              , pi_phy , p_phy , t_phy           &
@@ -79,7 +79,7 @@ CONTAINS
 
 
     LOGICAL ,INTENT(IN)                        :: adapt_step_flag
-    REAL, INTENT(IN)                           :: curr_secs
+    REAL, INTENT(IN)                           :: curr_secs2
 
     REAL    ,DIMENSION(ims:ime,kms:kme,jms:jme,num_moist),INTENT(INOUT)   :: moist
     REAL    ,DIMENSION(ims:ime,kms:kme,jms:jme,num_moist),INTENT(IN)      :: moist_old
@@ -126,6 +126,9 @@ CONTAINS
 
   REAL ,DIMENSION(grid%sm31:grid%em31,grid%sm32:grid%em32,grid%sm33:grid%em33,n_nba_rij) &
   :: nba_rij
+
+  REAL ,DIMENSION(ims:ime,kms:kme,jms:jme) :: rv_tend_old
+  INTEGER :: i,j,k 
 
 ! Local
 
@@ -703,6 +706,9 @@ BENCH_START(update_phy_ten_tim)
        !$OMP PARALLEL DO   &
        !$OMP PRIVATE ( ij )
 
+   rv_tend_old(ims:ime,kms:kme,jms:jme) = rv_tendf(ims:ime,kms:kme,jms:jme)
+   IF( MOD(NINT(curr_secs2),config_flags%tend_window) .EQ. 0 ) grid%rv_tend_phy(ims:ime,kms:kme,jms:jme) = 0
+
        DO ij = 1 , grid%num_tiles
 
          CALL wrf_debug ( 200 , ' call update_phy_ten' )
@@ -755,6 +761,11 @@ BENCH_START(update_phy_ten_tim)
 
        END DO
        !$OMP END PARALLEL DO
+
+   DO j = jms,jme   ;   DO k = kms,kme   ;   DO i = ims,ime
+      grid%rv_tend_phy(i,k,j) = grid%rv_tend_phy(i,k,j) + ( rv_tendf(i,k,j) - rv_tend_old(i,k,j) ) / grid%muv(i,j) * grid%dt
+   ENDDO   ;   ENDDO   ;   ENDDO
+
 BENCH_END(update_phy_ten_tim)
 
       IF (grid%skebs_on==1) then
