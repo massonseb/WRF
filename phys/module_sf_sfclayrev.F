@@ -22,6 +22,7 @@
                       gz1oz0,wspd,br,isfflx,dx,                     &
                       svp1,svp2,svp3,svpt0,ep1,ep2,                 &
                       karman,p1000mb,lakemask,                      &
+                      cha_coef,                                     &
                       ids,ide,jds,jde,kds,kde,                      &
                       ims,ime,jms,jme,kms,kme,                      &
                       its,ite,jts,jte,kts,kte,                      &
@@ -53,6 +54,7 @@
     tsk,        &
     xland,      &
     lakemask,   &
+    cha_coef,   &
     water_depth
 
  real(kind=kind_phys),intent(in),dimension(ims:ime,kms:kme,jms:jme):: &
@@ -119,7 +121,7 @@
  real(kind=kind_phys),dimension(its:ite):: dz1d,u1d,v1d,qv1d,p1d,t1d
 
  real(kind=kind_phys),dimension(its:ite):: &
-    dx_hv,mavail_hv,pblh_hv,psfc_hv,tsk_hv,xland_hv,water_depth_hv,lakemask_hv
+    dx_hv,mavail_hv,pblh_hv,psfc_hv,tsk_hv,xland_hv,water_depth_hv,lakemask_hv,cha_coef_hv
  real(kind=kind_phys),dimension(its:ite,kts:kte):: &
     dz_hv,u_hv,v_hv,qv_hv,p_hv,t_hv
 
@@ -155,6 +157,7 @@
        tsk_hv(i)         = tsk(i,j)
        xland_hv(i)       = xland(i,j)
        lakemask_hv(i)    = lakemask(i,j)
+       cha_coef_hv(i)    = cha_coef(i,j)
        water_depth_hv(i) = water_depth(i,j)
 
        do k = kts,kte
@@ -208,6 +211,7 @@
                           rmol=rmol_hv,znt=znt_hv,ust=ust_hv,mavail=mavail_hv,                     &
                           zol=zol_hv,mol=mol_hv,regime=regime_hv,psim=psim_hv,                     &
                           psih=psih_hv,fm=fm_hv,fh=fh_hv,xland=xland_hv,lakemask=lakemask_hv,      &
+                          cha_coef=ch_coef_hv,                                                     &
                           hfx=hfx_hv,qfx=qfx_hv,tsk=tsk_hv,u10=u10_hv,                             &
                           v10=v10_hv,th2=th2_hv,t2=t2_hv,q2=q2_hv,flhc=flhc_hv,                    &
                           flqc=flqc_hv,qgh=qgh_hv,qsfc=qsfc_hv,lh=lh_hv,                           &
