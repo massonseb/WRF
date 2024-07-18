@@ -1024,15 +1024,18 @@ Namelist variables for controlling the adaptive time step option:
                                                   model layers is specified in OM_DEPTH in wrfinput_d01
  traj_opt                            = 0        ! Forward trajectory calculation (Lee and Chen 2013)
  num_traj                            = 1000     ! number of trajectories to be released
- isftcflx                            = 0        ! alternative Ck, Cd formulation for tropical storm application 
-                                                  sf_sfclay=1 and 11
-                                                  0=default
-                                                  1=Donelan Cd + const z0q 
-                                                  2=Donelan Cd + Garratt 
+ isftcflx                            = 0        ! alternative Ck, Cd formulation for tropical storm application or for wave coupling 
+                                                  sf_sfclay=1 and 91
+                                                  (default) =0: constant charnock (0.0185) + zt & zq from COARE3.0
+                                                            =1: Donelan Cd + zt & zq from const z0q 
+                                                            =2: Donelan Cd + zt & zq from Garratt
+                                                            =5: varying charnock coefficient (e.g. from a wave model) + zt & zq from COARE3.0
                                                   sf_sfclay=5
-                                                  (default) =0: z0, zt, and zq from COARE3.0 (Fairall et al 2003)
-                                                            =1: z0 from Davis et al (2008), zt & zq from COARE3.0
+                                                  (default) =0: z0, zt, and zq from COARE3.0/3.5 (Fairall et al 2003/Edson et al 2013)
+                                                            =1: z0 from Davis et al (2008), zt & zq from COARE3.0/3.5
                                                             =2: z0 from Davis et al (2008), zt & zq from Garratt (1992)
+                                                            =3: z0 from Taylor and Yelland (2004), zt and zq from COARE 3.0/3.5
+                                                            =5: z0 from a varying charnock coefficient (e.g. from wave model), zt and zq from COARE 3.0/3.5
  fractional_seaice                   = 0        ! treat sea-ice as fractional field (1) or ice/no-ice flag (0)
                                                   works for sf_sfclay_physics=1,2,3,4,5,7,and 91 
                                                   If fractional_seaice = 1, also set seaice_threshold = 0.
