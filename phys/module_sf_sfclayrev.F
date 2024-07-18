@@ -211,7 +211,7 @@
                           rmol=rmol_hv,znt=znt_hv,ust=ust_hv,mavail=mavail_hv,                     &
                           zol=zol_hv,mol=mol_hv,regime=regime_hv,psim=psim_hv,                     &
                           psih=psih_hv,fm=fm_hv,fh=fh_hv,xland=xland_hv,lakemask=lakemask_hv,      &
-                          cha_coef=ch_coef_hv,                                                     &
+                          cha_coef=cha_coef_hv,                                                     &
                           hfx=hfx_hv,qfx=qfx_hv,tsk=tsk_hv,u10=u10_hv,                             &
                           v10=v10_hv,th2=th2_hv,t2=t2_hv,q2=q2_hv,flhc=flhc_hv,                    &
                           flqc=flqc_hv,qgh=qgh_hv,qsfc=qsfc_hv,lh=lh_hv,                           &
