@@ -84,6 +84,7 @@
                              qsfc,lh,gz1oz0,wspd,br,isfflx,dx,         &
                              svp1,svp2,svp3,svpt0,ep1,ep2,             &
                              karman,p1000mb,lakemask,                  &
+                             cha_coef,                                 &
                              shalwater_z0,water_depth,                 &
                              isftcflx,iz0tlnd,scm_force_flux,          &
                              ustm,ck,cka,cd,cda,                       &
@@ -111,6 +112,7 @@
     tsk,        &
     xland,      &
     lakemask,   &
+    cha_coef,   &
     water_depth
 
  real(kind=kind_phys),intent(in),dimension(its:):: &
@@ -813,7 +815,12 @@
 !      znt(i)=czc*ust(i)*ust(i)/g+0.11*1.5e-5/ust(i)
 ! AHW: change roughness length, and hence the drag coefficients Ck and Cd
        if(present(isftcflx)) then
-          if(isftcflx.ne.0) then
+          if ( isftcflx.eq.5 ) then
+! isftcflx=5 is for coupling with a wave model
+! varying charnock coefficient CHA_COEF from the wave model is used instead
+! of CZO in the computation of roughness length ZNT
+             znt(i)=cha_coef(i)*ust(i)*ust(i)/g+0.11*1.5e-5/ust(i)
+          elseif ( isftcflx.eq.1 .or. isftcflx.eq.2 ) then   
 !            znt(i)=10.*exp(-9.*ust(i)**(-.3333))
 !            znt(i)=10.*exp(-9.5*ust(i)**(-.3333))
 !            znt(i)=znt(i) + 0.11*1.5e-5/amax1(ust(i),0.01)
