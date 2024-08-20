@@ -1,0 +1,146 @@
+#
+#   We provide here, as an example, the namcouple file used in the coupled model
+# described in section 4.1.3 of "A non-intrusive, multi-scale, and flexible
+# coupling interface in WRF" (Masson et al. 2024, submitted to GMD).
+#
+#  - As described in this section, the geometry and the resolution of the
+# different atmospheric and oceanic grids allow to exclude the coupling from
+# EXT_d02 to WRF_d01 and from WRF_d01 to EXT_d02.
+#  - WRF_d01(d02) domain size is 166x250 (334x496) points with a time step of
+# 60(20)s.
+#  - EXT_d01(d02) domain size is 357x723 (720x1467) points with a time step of
+# 1200(400)s.
+#  - The coupling frequency is 3600s for all variables.
+#
+# For the sake of brevity, this namelist shows only 1 example of for send and
+# received field.
+#
+# See OASIS3-MCT user guide (Valcke et al. 2021) for a detailed description of
+# the namcouple syntax and features.
+# Note that lines with "$END" are no more needed since OASIS3-MCT 4.0 
+#
+############################################################################### 
+# NFIELDS: total number of fields being exchanged:
+#   3 x Sea surface temperature 
+#   3 x wind stress along X axis 
+#   3 x wind stress along Y axis 
+#   3 x evap - ( rain + snow ) 
+#   3 x solar heat flux  
+#   3 x Non solar heat flux
+#
+$NFIELDS 
+ 18  
+$END 
+############################################################################### 
+# 
+# RUNTIME: total simulated time for the actual run in seconds (<I8) 
+#          e.g. : 30 days = 3600 * 24 * 30  = 2592000 
+$RUNTIME 
+ 2592000 
+$END 
+###############################################################################  
+# NLOGPRT: printing level in output file cplout: 
+$NLOGPRT 
+ 0 
+$END 
+############################################################################### 
+$STRINGS 
+############################################################################### 
+# 
+#                      OCEAN (EXT) --->>>  ATMOS (WRF) 
+#                      ------------------------------- 
+#   EXT_d01 -> WRF_d01 
+#   EXT_d01 -> WRF_d02  
+#   no need to couple EXT_d02 to WRF_d01 as EXT_d01 resolution >> WRF_d01 resolution 
+#   EXT_d02 -> WRF_d02 
+# 
+# 3 x Sea surface temperature 
+#
+############################################################################### 
+############################################################################### 
+# Sea surface temperature (EXT_d01 -> WRF_d01) 
+# 
+oceSST01_atm01 WRF_d01_EXT_d01_SST 1 3600  2  sst01.nc EXPORTED 
+357 723 166 250 n75t  w75m  LAG=1200 
+R  0  R  0 
+LOCTRANS MAPPING 
+AVERAGE 
+mozaic_EXT_d01_WRF_d01.nc 
+# 
+############################################################################### 
+# Sea surface temperature (EXT_d01 -> WRF_d02) 
+# 
+oceSST01_atm02 WRF_d02_EXT_d01_SST 1 3600  2  sst02.nc EXPORTED 
+357 723 334 496 n75t  w75m  LAG=1200 
+R  0  R  0 
+LOCTRANS MAPPING 
+AVERAGE 
+mozaic_EXT_d01_WRF_d02.nc 
+# 
+############################################################################### 
+# Sea surface temperature (EXT_d02 -> WRF_d02) 
+# 
+oceSST02_atm02 WRF_d02_EXT_d02_SST 1 3600  2  sst04.nc EXPORTED 
+720 1467 334 496 n75t  w75m  LAG=400 
+R  0  R  0 
+LOCTRANS MAPPING 
+AVERAGE 
+mozaic_EXT_d02_WRF_d02.nc 
+# 
+############################################################################ 
+############################################################################ 
+############################################################################ 
+# 
+#                      ATMOS (WRF)  --->>>  OCEAN (EXT) 
+#                      ------------------------------- 
+#   WRF_d01 -> EXT_d01 
+#   no need to couple WRF_d01 to EXT_d02 as EXT_d02 domain fully covered by WRF_d02 
+#   WRF_d02 -> EXT_d01 
+#   WRF_d02 -> EXT_d02 
+# 
+# 3 x wind stress along X axis 
+# 3 x wind stress along Y axis 
+# 3 x evap - ( rain + snow ) 
+# 3 x solar heat flux  
+# 3 x Non solar heat flux 
+# 
+############################################################################ 
+############################################################################ 
+############################################################################ 
+# wind stress along X axis (WRF_d01 -> EXT_d01) 
+# 
+WRF_d01_EXT_d01_TAUX oceTaux01_atm01 23 3600  2  flx01.nc   EXPORTED 
+166 250  357 723  w75u  n75u  LAG=60 
+R  0  R  0 
+LOCTRANS MAPPING 
+AVERAGE 
+mozaic_WRF_d01_EXT_d01.nc 
+# 
+########################################################################### 
+# wind stress along X axis (WRF_d02 -> EXT_d01) 
+# 
+WRF_d02_EXT_d01_TAUX oceTaux01_atm02 23 3600  2  flx03.nc   EXPORTED 
+334 496  357 723  w75u  n75u  LAG=20 
+R  0  R  0 
+LOCTRANS MAPPING 
+AVERAGE 
+mozaic_WRF_d02_EXT_d01.nc 
+#
+########################################################################### 
+# wind stress along X axis (WRF_d02 -> EXT_d02) 
+# 
+WRF_d02_EXT_d02_TAUX oceTaux02_atm02 23 3600  2  flx04.nc   EXPORTED 
+334 496  720 1467  w75u  n75u  LAG=20 
+R  0  R  0 
+LOCTRANS MAPPING 
+AVERAGE 
+mozaic_WRF_d02_EXT_d02.nc 
+#  
+########################################################################### 
+########################################################################### 
+
+... 
+
+########################################################################### 
+#
+$END 
