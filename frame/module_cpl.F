@@ -539,8 +539,8 @@ CONTAINS
       ! test if we need to compute the module of the wind speed and stres
       icnt   =        COUNT( cpl_tosend( grid%id, cpl_get_fldid( 'TAUX_ICE' ), max_edom ) )
       IF ( icnt > 0 ) THEN 
-         u_ui(ips:ipe,jps:jpe) = grid%u_phy(ips:ipe,kps,jps:jpe) ! - grid%uice(ips:ipe,jps:jpe)
-         v_vi(ips:ipe,jps:jpe) = grid%v_phy(ips:ipe,kps,jps:jpe) ! - grid%vice(ips:ipe,jps:jpe)
+         u_ui(ips:ipe,jps:jpe) = grid%u_phy(ips:ipe,kps,jps:jpe) - grid%uice(ips:ipe,jps:jpe)
+         v_vi(ips:ipe,jps:jpe) = grid%v_phy(ips:ipe,kps,jps:jpe) - grid%vice(ips:ipe,jps:jpe)
          wspd(ips:ipe,jps:jpe) = MAX( SQRT( u_ui(ips:ipe,jps:jpe)**2 + v_vi(ips:ipe,jps:jpe)**2 ), 1.e-7 )
          taut(ips:ipe,jps:jpe) = grid%rho(ips:ipe,kps,jps:jpe) * grid%ust_ice(ips:ipe,jps:jpe)**2
          taui(ips:ipe,jps:jpe) = taut(ips:ipe,jps:jpe) * u_ui(ips:ipe,jps:jpe) / wspd(ips:ipe,jps:jpe)
