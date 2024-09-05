@@ -19,6 +19,7 @@ module_dm.o: \
 	module_configure.o \
 	module_comm_dm.o \
 	module_cpl.o \
+	module_xios.o \
 	../share/module_model_constants.o 
 
 
@@ -173,6 +174,7 @@ module_integrate.o: \
 	module_configure.o \
 	$(LLIST) \
 	module_cpl.o \
+	module_xios.o \
 	module_dm.o \
 	$(ESMF_MOD_DEPENDENCE) 
 
@@ -193,6 +195,7 @@ module_io.o: \
 	module_state_description.o \
 	module_configure.o \
 	module_streams.o \
+	module_xios.o \
 	module_driver_constants.o 
 
 
@@ -250,6 +253,12 @@ module_sm.o: \
 	module_wrf_error.o 
 
 
+module_xios.o: \
+	module_configure.o \
+	module_driver_constants.o \
+	module_domain.o
+
+
 module_cpl.o: \
 	../share/module_model_constants.o \
 	module_driver_constants.o \
@@ -260,6 +269,7 @@ module_cpl.o: \
 
 module_cpl_oasis3.o: \
 	module_driver_constants.o \
+	module_xios.o \
 	module_domain.o 
 
 
@@ -1605,6 +1615,7 @@ output_wrf.o: \
 	../frame/module_domain.o \
 	../frame/module_state_description.o \
 	../frame/module_configure.o \
+	../frame/module_xios.o \
 	module_io_wrf.o \
 	$(ESMF_MOD_DEPENDENCE) 
 
@@ -1767,6 +1778,7 @@ mediation_integrate.o: \
 	../frame/module_domain.o \
 	../frame/module_configure.o \
 	../frame/module_timing.o \
+	../frame/module_xios.o \
 	$(ESMF_MOD_DEPENDENCE) \
 	module_date_time.o \
 	module_bc_time_utilities.o \
@@ -2378,6 +2390,7 @@ module_wrf_top.o: \
 	../frame/module_wrf_error.o \
 	../frame/module_state_description.o \
 	../frame/module_cpl.o \
+	../frame/module_xios.o \
 	$(ESMF_MOD_DEPENDENCE) \
 
 # End	of DEPENDENCIES for main 

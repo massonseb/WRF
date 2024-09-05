@@ -11,6 +11,7 @@
 !    USE module_date_time
     USE module_model_constants
     USE module_utility
+    USE module_xios, ONLY : xios_on, xios_def_field, xios_put, xios_need
     IMPLICIT NONE
 #include "wrf_io_flags.h"
 #include "wrf_status_codes.h"
@@ -100,6 +101,8 @@
     CHARACTER*80 alarmname, timestring, debuggal
     INTEGER seconds, seconds2, iring
     INTEGER :: nio_tasks_per_group
+    LOGICAL :: llok   
+    INTEGER :: idvar, ii
 
     LOGICAL, EXTERNAL :: wrf_dm_on_monitor
 
@@ -324,13 +327,6 @@
     WRITE ( wrf_err_message , * ) 'output_wrf: begin, current_date=',current_date
     CALL wrf_debug ( 300 , wrf_err_message )
 
-    WRITE( message , * ) "OUTPUT FROM " , TRIM(program_name)
-    CALL wrf_put_dom_ti_char ( fid , 'TITLE' , TRIM(message) , ierr )
-    ! added grib-specific metadata:  Todd Hutchinson 8/21/2005
-    IF ( ( use_package( io_form ) == IO_GRIB1 ) .OR. &
-         ( use_package( io_form ) == IO_GRIB2 ) ) THEN
-      CALL wrf_put_dom_ti_char ( fid, 'PROGRAM_NAME', TRIM(program_name) , ierr )
-    ENDIF
     CALL nl_get_start_year(grid%id,start_year)
     CALL nl_get_start_month(grid%id,start_month)
     CALL nl_get_start_day(grid%id,start_day)
@@ -344,6 +340,18 @@
     WRITE ( start_date , FMT = '(I4.4,"-",I2.2,"-",I2.2,"_",I2.2,":",I2.2,":",I2.2)' ) &
             start_year,start_month,start_day,start_hour,start_minute,start_second
 #endif
+
+! bypass all attributes definition if xios_on and we are not doing file
+! definition (at start_date) or restart
+ IF ( .NOT. xios_on .OR. current_date.EQ.start_date .OR. switch.EQ.restart_only ) THEN
+
+    WRITE( message , * ) "OUTPUT FROM " , TRIM(program_name)
+    CALL wrf_put_dom_ti_char ( fid , 'TITLE' , TRIM(message) , ierr )
+    ! added grib-specific metadata:  Todd Hutchinson 8/21/2005
+    IF ( ( use_package( io_form ) == IO_GRIB1 ) .OR. &
+         ( use_package( io_form ) == IO_GRIB2 ) ) THEN
+      CALL wrf_put_dom_ti_char ( fid, 'PROGRAM_NAME', TRIM(program_name) , ierr)
+    ENDIF
     CALL wrf_put_dom_ti_char ( fid , 'START_DATE', TRIM(start_date) , ierr )
     IF ( switch .EQ. input_only) THEN
        CALL wrf_put_dom_ti_char ( fid , 'SIMULATION_START_DATE', TRIM(start_date) , ierr )
@@ -979,7 +987,7 @@ endif
       CALL wrf_put_dom_ti_integer ( fid , 'PRODUCTION_STATUS' , config_flags%production_status , 1 , ierr )
       CALL wrf_put_dom_ti_integer ( fid , 'COMPRESSION' , config_flags%compression , 1 , ierr )
     ENDIF
-
+  ENDIF   ! ( .NOT. xios_on .OR. current_date.EQ.start_date .OR. switch.EQ.restart_only )
 #if ( (EM_CORE == 1) && (DA_CORE != 1) )
       save_topo_orig = grid%save_topo_from_real
 
@@ -1006,10 +1014,27 @@ endif
          (first_history .LE. switch .AND. switch .LE. last_history ) .OR. &
           switch .EQ. restart_only    ) THEN
       newswitch = switch
+      idvar = 1
       p => grid%head_statevars%next
       CALL wrf_start_io_timestep(fid, ierr)
       DO WHILE ( ASSOCIATED( p ) )
-        IF ( p%ProcOrient .NE. 'X' .AND. p%ProcOrient .NE. 'Y' ) THEN   ! no I/O for xposed variables
+
+         IF( xios_on ) THEN
+            llok = p%Restart.AND.switch.EQ.restart_only                  ! restart are done without xios
+            IF ( p%Ndim .GE. 2 .AND. current_date.EQ.start_date ) THEN   ! xios is dealing only with 2d, 3d, 4d arrays
+               llok = .TRUE.                                             ! .true. as we have to define the variable
+            ELSEIF ( p%Ndim .EQ. 2 .OR. p%Ndim .EQ. 3 ) THEN             ! we need to know if the varaible is realy used -> save cpu
+               llok = llok .OR. xios_need( grid%id, idvar )
+            ELSEIF ( p%Ndim .EQ. 4 .AND. p%scalar_array ) THEN           ! to we need one of the tracers of the 4d array?
+               DO itrace = PARAM_FIRST_SCALAR , p%num_table(grid%id)
+                  llok = llok .OR. xios_need( grid%id, idvar + itrace - PARAM_FIRST_SCALAR )
+               END DO
+            ENDIF
+         ELSE
+            llok = .TRUE.
+         END IF
+
+        IF ( p%ProcOrient .NE. 'X' .AND. p%ProcOrient .NE. 'Y' .AND. llok ) THEN   ! no I/O for xposed variables
           IF ( p%Ndim .EQ. 0 ) THEN
             IF ((p%Restart.AND.switch.EQ.restart_only).OR.on_stream(p%streams,newswitch)) THEN
               IF ( in_use_for_config(grid%id,TRIM(p%VarName)) ) THEN
@@ -1234,7 +1259,7 @@ endif
               ENDIF
             ENDIF
           ELSE IF ( p%Ndim .EQ. 2 ) THEN
-            IF ((p%Restart.AND.switch.EQ.restart_only).OR.on_stream(p%streams,newswitch)) THEN
+            IF ((p%Restart.AND.switch.EQ.restart_only).OR.on_stream(p%streams,newswitch).OR.xios_on) THEN
               IF ( in_use_for_config(grid%id,TRIM(p%VarName)) .AND.  &
                    ( .NOT. p%subgrid_x .OR. (p%subgrid_x .AND. grid%sr_x .GT. 0) ) .AND. &
                    ( .NOT. p%subgrid_y .OR. (p%subgrid_y .AND. grid%sr_y .GT. 0) )       &
@@ -1243,6 +1268,19 @@ endif
                   dname = p%DataName
                   IF (p%Ntl.GT.0.AND.switch.NE.restart_only)dname=dname(1:len(TRIM(dname))-2)
                   memord = p%MemoryOrder
+
+                  IF ( xios_on .AND. p%TYPE == 'r' .AND. TRIM(memord) == 'XY' .AND. switch /= restart_only ) THEN
+                     IF (current_date == start_date) THEN
+                        CALL xios_def_field( idvar, TRIM(dname), TRIM(p%Description), TRIM(p%Units), TRIM(p%Stagger), p%Ndim )
+                     ELSE
+                        CALL xios_put( grid%id, TRIM(dname), p%rfield_2d, TRIM(p%Stagger), &
+                           &           ids, ide, jds, jde, kds, kde, &
+                           &           ims, ime, jms, jme, kms, kme, &
+                           &           ips, ipe, jps, jpe, kps, kpe, idvar )
+                     ENDIF
+                  ENDIF
+
+                  IF ( .NOT. xios_on .OR. (p%Restart.AND.switch.EQ.restart_only) ) THEN
                   IF      ( p%Type .EQ. 'r' ) THEN
                     CALL wrf_ext_write_field (  &
                                     fid                     , & ! DataHandle
@@ -1336,11 +1374,12 @@ endif
                      p%sp1 , p%ep1 , p%sp2 , p%ep2 , p%sp3 , p%ep3 ,  &
                      ierr )
                   ENDIF
+                  ENDIF   ! 
                 ENDIF
               ENDIF
             ENDIF
           ELSE IF ( p%Ndim .EQ. 3 ) THEN
-            IF ((p%Restart.AND.switch.EQ.restart_only).OR.on_stream(p%streams,newswitch)) THEN
+            IF ((p%Restart.AND.switch.EQ.restart_only).OR.on_stream(p%streams,newswitch).OR.xios_on) THEN
               IF ( in_use_for_config(grid%id,TRIM(p%VarName)) .AND.  &
                    ( .NOT. p%subgrid_x .OR. (p%subgrid_x .AND. grid%sr_x .GT. 0) ) .AND. &
                    ( .NOT. p%subgrid_y .OR. (p%subgrid_y .AND. grid%sr_y .GT. 0) )       &
@@ -1349,6 +1388,20 @@ endif
                   dname = p%DataName
                   IF (p%Ntl.GT.0.AND.switch.NE.restart_only)dname=dname(1:len(TRIM(dname))-2)
                   memord = p%MemoryOrder
+
+
+                  IF ( xios_on .AND. p%TYPE == 'r' .AND. TRIM(memord) == 'XZY' .AND. switch /= restart_only ) THEN
+                     IF (current_date == start_date) THEN
+                        CALL xios_def_field( idvar, TRIM(dname), TRIM(p%Description), TRIM(p%Units), TRIM(p%Stagger), p%Ndim )
+                     ELSE
+                        CALL xios_put( grid%id, TRIM(dname), p%rfield_3d, TRIM(p%Stagger), &
+                           &           ids, ide, jds, jde, kds, kde, &
+                           &           ims, ime, jms, jme, kms, kme, &
+                           &           ips, ipe, jps, jpe, kps, kpe, idvar )
+                     ENDIF
+                  ENDIF
+
+                  IF ( .NOT. xios_on .OR. (p%Restart.AND.switch.EQ.restart_only) ) THEN
                   IF      ( p%Type .EQ. 'r' ) THEN
                     CALL wrf_ext_write_field (  &
                                     fid                     , & ! DataHandle
@@ -1420,11 +1473,12 @@ endif
                      ierr )
 ! NOTE no io on logical arrays greater than 2d
                   ENDIF
+                  ENDIF
                 ENDIF
               ENDIF
             ENDIF
           ELSE IF ( p%Ndim .EQ. 4 .AND. p%scalar_array ) THEN
-              IF (switch.EQ.restart_only.OR.p%Ntl/100.EQ.mod(p%Ntl,100)) THEN
+              IF(switch.EQ.restart_only.OR.p%Ntl/100.EQ.mod(p%Ntl,100).OR.xios_on) THEN
 ! Use a different write routine, wrf_ext_write_field_arr, and pass in the
 ! tracer indeces so that p%rfield_4d can be passsed in without arguments,
 ! avoiding the possiblity of a copy-in/copy-out problem for some compilers.
@@ -1434,6 +1488,23 @@ endif
                   dname = p%dname_table( grid%id, itrace )
                   IF (p%Ntl.GT.0.AND.switch.NE.restart_only)dname=dname(1:len(TRIM(dname))-2)
                   memord = p%MemoryOrder
+
+
+                  ii = idvar + itrace - PARAM_FIRST_SCALAR
+                  IF ( xios_on .AND. p%TYPE == 'r' .AND. TRIM(memord) == 'XZY' .AND. switch /= restart_only ) THEN
+                     IF (current_date == start_date) THEN
+                        CALL xios_def_field( ii, TRIM(p%dname_table( grid%id, itrace)),   &
+                           &                     TRIM(p%desc_table ( grid%id, itrace)),   &
+                           &                     TRIM(p%units_table( grid%id, itrace)), TRIM(p%Stagger), 3  )
+                     ELSEIF ( xios_need( grid%id, ii ) ) THEN  ! must to test the need for each of the tracer
+                        CALL xios_put( grid%id, TRIM(p%dname_table( grid%id, itrace)), p%rfield_4d(:,:,:,itrace), TRIM(p%Stagger), &
+                           &           ids, ide, jds, jde, kds, kde, &
+                           &           ims, ime, jms, jme, kms, kme, &
+                           &           ips, ipe, jps, jpe, kps, kpe, ii )
+                     ENDIF
+                  ENDIF
+
+                  IF ( .NOT. xios_on .OR. (p%Restart.AND.switch.EQ.restart_only) ) THEN
                   IF      ( p%Type .EQ. 'r' ) THEN
                     CALL wrf_ext_write_field_arr (  &
                                     fid                     , & ! DataHandle
@@ -1513,11 +1584,17 @@ endif
                      p%sp1 , p%ep1 , p%sp2 , p%ep2 , p%sp3 , p%ep3 ,  &
                      ierr )
                   ENDIF
+                  ENDIF
                 ENDIF
               ENDDO  ! loop over tracers
             ENDIF  ! if-then-else over dim
           ENDIF
         ENDIF
+        IF ( p%Ndim .EQ. 4 .AND. p%scalar_array ) THEN
+          idvar = idvar + p%num_table(grid%id) - PARAM_FIRST_SCALAR + 1
+        ELSE
+          idvar = idvar + 1
+        ENDIF       
         p => p%next
       ENDDO
       CALL wrf_end_io_timestep(fid, ierr)
