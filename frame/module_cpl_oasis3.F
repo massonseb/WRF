@@ -15,6 +15,10 @@
    USE module_domain          , ONLY : domain, get_ijk_from_grid
    USE module_driver_constants, ONLY : max_domains, max_cplfld, max_extdomains
    USE mod_oasis              ! OASIS3-MCT module
+   USE module_xios            , ONLY : xios_on
+#ifdef key_cpp_xios
+   USE xios                   , ONLY : xios_oasis_enddef
+#endif
 
    IMPLICIT NONE
    PRIVATE
@@ -246,6 +250,12 @@ CONTAINS
       !! ** Purpose :   tells to OASIS that exchanged field definition is finished
       !!--------------------------------------------------------------------
       INTEGER :: ierror         ! return error code
+
+      IF ( xios_on ) THEN
+#ifdef key_cpp_xios
+        CALL xios_oasis_enddef
+#endif
+      ENDIF    
       CALL oasis_enddef(ierror)
       IF( ierror /= OASIS_Ok )   CALL cpl_oasis_abort( 'cpl_oasis_define', 'Failure in oasis_enddef')
       
