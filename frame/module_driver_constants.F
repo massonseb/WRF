@@ -97,7 +97,7 @@ MODULE module_driver_constants
 
    !  The maximum number of fields that can be sent or received in coupled mode
 
-   INTEGER , PARAMETER :: max_cplfld = 20
+   INTEGER , PARAMETER :: max_cplfld = 25
 
    !  The maximum number of domains used by the external model with which wrf is communicating in coupled mode
 

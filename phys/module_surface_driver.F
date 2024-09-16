@@ -1782,11 +1782,15 @@ CONTAINS
           EMISS(I,J)  = 0.95 * XICE(I,J) + 0.98 * ( 1.0-XICE(I,J) ) ! bai
           EMBCK(I,J)  = 0.95
 !===============================================================================
-          DO nk = 1, num_soil_layers
-            TSLB(I,NK,J) = TSK(I,J)
-            SMOIS(I,NK,J) = 1.0
-            SH2O(I,NK,J) = 0.0
-          ENDDO
+          ! water point is sea-ice point
+          IF ( XICEM(I,J) .LT. XICE_THRESHOLD ) THEN
+             ! water point turns to sea ice point
+             DO nk = 1, num_soil_layers
+                TSLB(I,NK,J) = TSK(I,J)
+                SMOIS(I,NK,J) = 1.0
+                SH2O(I,NK,J) = 0.0
+             ENDDO
+          ENDIF
         ENDIF
      IF (lakemodel.ne.1) then
          IF(XLAND(i,j) .GT. 1.5) THEN
