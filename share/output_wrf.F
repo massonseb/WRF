@@ -325,13 +325,6 @@
     WRITE ( wrf_err_message , * ) 'output_wrf: begin, current_date=',current_date
     CALL wrf_debug ( 300 , wrf_err_message )
 
-    WRITE( message , * ) "OUTPUT FROM " , TRIM(program_name)
-    CALL wrf_put_dom_ti_char ( fid , 'TITLE' , TRIM(message) , ierr )
-    ! added grib-specific metadata:  Todd Hutchinson 8/21/2005
-    IF ( ( use_package( io_form ) == IO_GRIB1 ) .OR. &
-         ( use_package( io_form ) == IO_GRIB2 ) ) THEN
-      CALL wrf_put_dom_ti_char ( fid, 'PROGRAM_NAME', TRIM(program_name) , ierr )
-    ENDIF
     CALL nl_get_start_year(grid%id,start_year)
     CALL nl_get_start_month(grid%id,start_month)
     CALL nl_get_start_day(grid%id,start_day)
