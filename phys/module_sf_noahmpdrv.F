@@ -1821,7 +1821,8 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
               END DO
 	        !TMN(I,J) = MIN(TMN(I,J),263.15)         ! set deep temp to at most -10C
 		SNOW(I,J) = MAX(SNOW(I,J), 10.0)        ! set SWE to at least 10mm
-                SNOWH(I,J)=SNOW(I,J)*0.01               ! SNOW in mm and SNOWH in m
+!                SNOWH(I,J)=SNOW(I,J)*0.01               ! SNOW in mm and SNOWH in m. snow density=100
+                SNOWH(I,J)=SNOW(I,J)*0.004               ! SNOW in mm and SNOWH in m. snow density=250
 	    ELSE
 	      
               BEXP   =   BEXP_TABLE(ISLTYP(I,J))
