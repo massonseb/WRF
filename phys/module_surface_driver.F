@@ -1528,7 +1528,7 @@ CONTAINS
   if ( fractional_seaice == 0 ) then
      xice_threshold = 0.5
   else if ( fractional_seaice == 1 ) then
-     xice_threshold = 0.02
+     xice_threshold = 0.05  ! 0.02
   endif
 
 !!$  if ( ( seaice_albedo_opt == 2 ) .and. ( ifndalbsi == 0 ) ) then
@@ -1791,7 +1791,9 @@ CONTAINS
                 SH2O(I,NK,J) = 0.0
              ENDDO
           ENDIF
-        ENDIF
+       ELSE
+          XICE(I,J) = 0.0
+       ENDIF
      IF (lakemodel.ne.1) then
          IF(XLAND(i,j) .GT. 1.5) THEN
            IF ( SST(i,j) .LT. 350. .and. SST(i,j) .GT. 250.) THEN
