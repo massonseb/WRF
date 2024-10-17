@@ -246,7 +246,7 @@ contains
               SITHICK = MIN ( MAX ( 0.10 , ICEDEPTH(I,J) ) , 10.0 )
               ICEDEPTH(I,J) = SITHICK
            CASE (2)
-              SITHICK = XICE(I,J) + 0.25 
+              SITHICK = XICE(I,J) ! + 0.25 
               ICEDEPTH(I,J) = SITHICK
           END SELECT
 
@@ -321,7 +321,7 @@ contains
 
               ! Snow depth (SNOWSI) proportional to ICEDEPTH
               ! and bounded by SEAICE_SNOWDEPTH_MIN and SEAICE_SNOWDEPTH_MAX
-              SNOWONSI = MAX ( SEAICE_SNOWDEPTH_MIN , MIN ( ICEDEPTH(I,J) * 0.3, SEAICE_SNOWDEPTH_MAX ) )
+              SNOWONSI = MAX ( SEAICE_SNOWDEPTH_MIN , MIN ( ICEDEPTH(I,J) * 0.1, SEAICE_SNOWDEPTH_MAX ) )
               SNEQV = SNOWONSI * 0.3
               SNOWH2D(I,J) = SNOWONSI
 
