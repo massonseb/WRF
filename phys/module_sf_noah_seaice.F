@@ -296,6 +296,7 @@ CONTAINS
 #ifdef BPRC_MODS
 ! snow conductivity over sea ice from Persson (2012, Clim. Dyn., 39, 1349-1371) and Sturm, Perovich and Holmgren (2002, JGR, 107(C21), 8043)
       SNCOND = 0.3
+      SNCOND = SNCOND * 1.65   ! cf Fichefet, T. and Maqueda, M. A. M.: Sensitivity of a global sea ice model to the treatment of ice thermodynamics and dynamics, Journal of Geophysical Research: Oceans, 102, 12609–12646, https://doi.org/10.1029/97JC00480, 1997.
 #endif
 
 ! ----------------------------------------------------------------------
@@ -321,37 +322,37 @@ CONTAINS
 ! IT TO THE EXISTING SNOWPACK.
 ! ----------------------------------------------------------------------
 
-      IF ( SNOWNG .OR. FRZGRA ) THEN
-         SN_NEW = PRCP * DT * 0.001
-         SNEQV = SNEQV + SN_NEW
-
-! ----------------------------------------------------------------------
-! UPDATE SNOW DENSITY BASED ON NEW SNOWFALL, USING OLD AND NEW SNOW.
-! UPDATE SNOW THERMAL CONDUCTIVITY
-! ----------------------------------------------------------------------
-
-         CALL SNOW_NEW ( SFCTMP , SN_NEW , SNOWH , SNDENS )
-         !
-         ! kmh 09/04/2006 set Snow Density at 0.2 g/cm**3
-         ! for "cold permanent ice" or new "dry" snow
-         !
-         IF ( SNCOVR .GT. 0.99 ) THEN
-            !
-            !  if soil temperature less than 268.15 K, treat as typical 
-            !  Antarctic/Greenland snow firn
-            !
-            IF ( STC(1) .LT. (TFREEZ - 5.) ) SNDENS = 0.2
-            IF ( SNOWNG .AND. (T1.LT.273.) .AND. (SFCTMP.LT.273.) ) SNDENS=0.2
-         ENDIF
-
-         CALL CSNOW (SNCOND,SNDENS)
-
-#ifdef BPRC_MODS
-! snow conductivity over sea ice from Persson (2012, Clim. Dyn., 39, 1349-1371) and Sturm, Perovich and Holmgren (2002, JGR, 107(C21), 8043)
-      SNCOND = 0.3
-#endif
-
-      END IF
+!!$      IF ( SNOWNG .OR. FRZGRA ) THEN
+!!$         SN_NEW = PRCP * DT * 0.001
+!!$         SNEQV = SNEQV + SN_NEW
+!!$
+!!$! ----------------------------------------------------------------------
+!!$! UPDATE SNOW DENSITY BASED ON NEW SNOWFALL, USING OLD AND NEW SNOW.
+!!$! UPDATE SNOW THERMAL CONDUCTIVITY
+!!$! ----------------------------------------------------------------------
+!!$
+!!$         CALL SNOW_NEW ( SFCTMP , SN_NEW , SNOWH , SNDENS )
+!!$         !
+!!$         ! kmh 09/04/2006 set Snow Density at 0.2 g/cm**3
+!!$         ! for "cold permanent ice" or new "dry" snow
+!!$         !
+!!$         IF ( SNCOVR .GT. 0.99 ) THEN
+!!$            !
+!!$            !  if soil temperature less than 268.15 K, treat as typical 
+!!$            !  Antarctic/Greenland snow firn
+!!$            !
+!!$            IF ( STC(1) .LT. (TFREEZ - 5.) ) SNDENS = 0.2
+!!$            IF ( SNOWNG .AND. (T1.LT.273.) .AND. (SFCTMP.LT.273.) ) SNDENS=0.2
+!!$         ENDIF
+!!$
+!!$         CALL CSNOW (SNCOND,SNDENS)
+!!$
+!!$#ifdef BPRC_MODS
+!!$! snow conductivity over sea ice from Persson (2012, Clim. Dyn., 39, 1349-1371) and Sturm, Perovich and Holmgren (2002, JGR, 107(C21), 8043)
+!!$      SNCOND = 0.3
+!!$#endif
+!!$
+!!$      END IF
 
 ! ----------------------------------------------------------------------
 ! ALBEDO OF SEA ICE
@@ -420,6 +421,7 @@ CONTAINS
 ! THERMAL CONDUCTIVITY FOR SEA-ICE CASE
 ! ----------------------------------------------------------------------
       DF1 = 2.2                      ! sea-ice conductivity
+      DF1 = DF1 * 1.65   ! cf Fichefet, T. and Maqueda, M. A. M.: Sensitivity of a global sea ice model to the treatment of ice thermodynamics and dynamics, Journal of Geophysical Research: Oceans, 102, 12609–12646, https://doi.org/10.1029/97JC00480, 1997.
 
       DSOIL = - (0.5 * ZSOIL (1))    ! thickness of half of the 1st layer (-> depend of NSOIL)
 
