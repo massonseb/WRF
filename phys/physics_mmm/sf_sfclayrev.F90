@@ -818,11 +818,6 @@
 ! varying charnock coefficient CHA_COEF from the wave model is used instead
 ! of CZO in the computation of roughness length ZNT
              znt(i)=cha_coef(i)*ust(i)*ust(i)/g+0.11*1.5e-5/ust(i)
-          elseif ( isftcflx.eq.6 ) then
-! isftcflx=6 is for saturating classical charnock coefficient
-! to a given level 
-             znt(i)=czo*ust(i)*ust(i)/g+0.11*1.5e-5/ust(i)
-             znt(i)=min(znt(i),7.0e-3)
           elseif ( isftcflx.eq.1 .or. isftcflx.eq.2 ) then   
 !            znt(i)=10.*exp(-9.*ust(i)**(-.3333))
 !            znt(i)=10.*exp(-9.5*ust(i)**(-.3333))

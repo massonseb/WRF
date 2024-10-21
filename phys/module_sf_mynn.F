@@ -39,6 +39,8 @@ MODULE module_sf_mynn
 !             =1: z0 from Davis et al (2008), zt & zq from COARE 3.0/3.5
 !             =2: z0 from Davis et al (2008), zt & zq from Garratt (1992)
 !             =3: z0 from Taylor and Yelland (2004), zt and zq from COARE 3.0/3.5
+!             =4: same as 0 ??
+!             =5: z0 from a varying charnock coefficient (e.g. from wave model), zt and zq from COARE 3.0/3.5
 !
 !   SNOW/ICE only:
 !   Andreas (2002) snow/ice parameterization for thermal and
@@ -116,7 +118,7 @@ CONTAINS
               CP,G,ROVCP,R,XLV,PSFCPA,CHS,CHS2,CQS2,CPM,    &
               ZNT,UST,PBLH,MAVAIL,ZOL,MOL,REGIME,PSIM,PSIH, &
               XLAND,HFX,QFX,LH,TSK,FLHC,FLQC,QGH,QSFC,RMOL, &
-              U10,V10,TH2,T2,Q2,SNOWH,                      &
+              U10,V10,TH2,T2,Q2,SNOWH,CHA_COEF,             &
               GZ1OZ0,WSPD,BR,ISFFLX,DX,                     &
               SVP1,SVP2,SVP3,SVPT0,EP1,EP2,                 &
               KARMAN,itimestep,ch,qcg,                      &
@@ -171,6 +173,7 @@ CONTAINS
 !-- T2          diagnostic 2m temperature (K)
 !-- Q2          diagnostic 2m mixing ratio (kg/kg)
 !-- SNOWH       Snow height (m)
+!-- CHA_COEF    varying charnock coefficient (e.g. from wave model)
 !-- GZ1OZ0      log((z1+ZNT)/ZNT) where ZNT is roughness length 
 !-- WSPD        wind speed at lowest model level (m/s)
 !-- BR          bulk Richardson number in surface layer
@@ -192,6 +195,8 @@ CONTAINS
 !   (water      =1: z0 from Davis et al (2008), zt & zq from COARE3.0/3.5
 !    only)      =2: z0 from Davis et al (2008), zt & zq from Garratt (1992)
 !               =3: z0 from Taylor and Yelland (2004), zt and zq from COARE 3.0/3.5
+!               =4: identical to 0 ??
+!               =5: z0 from a varying charnock coefficient (e.g. from wave model), zt and zq from COARE 3.0/3.5
 !-- iz0tlnd     =0: Zilitinkevich (1995) with Czil=0.085, 
 !   (land       =1: Czil_new (modified according to Chen & Zhang 2008)
 !    only)      =2: Modified Yang et al (2002, 2008) - generalized for all landuse
@@ -253,7 +258,8 @@ CONTAINS
                                                               TSK, &
                                                               QCG, &
                                                            PSFCPA ,&
-                                                            SNOWH
+                                                            SNOWH ,&
+                                                         CHA_COEF
 
 
       REAL,     DIMENSION( ims:ime, jms:jme )                    , &
@@ -346,7 +352,7 @@ CONTAINS
                 XLAND(ims,j),HFX(ims,j),QFX(ims,j),TSK(ims,j),     &
                 U10(ims,j),V10(ims,j),TH2(ims,j),T2(ims,j),        &
                 Q2(ims,j),FLHC(ims,j),FLQC(ims,j),SNOWH(ims,j),    &
-                QGH(ims,j),QSFC(ims,j),LH(ims,j),                  &
+                QGH(ims,j),QSFC(ims,j),LH(ims,j),CHA_COEF(ims,j),  &
                 GZ1OZ0(ims,j),WSPD(ims,j),BR(ims,j),ISFFLX,DX,     &
                 SVP1,SVP2,SVP3,SVPT0,EP1,EP2,KARMAN,               &
                 ch(ims,j),qcg(ims,j),                              &
@@ -374,7 +380,7 @@ CONTAINS
                      PBLH,RMOL,ZNT,UST,MAVAIL,ZOL,MOL,REGIME,      &
                      PSIM,PSIH,XLAND,HFX,QFX,TSK,                  &
                      U10,V10,TH2,T2,Q2,FLHC,FLQC,SNOWH,QGH,        &
-                     QSFC,LH,GZ1OZ0,WSPD,BR,ISFFLX,DX,             &
+                     QSFC,LH,CHA_COEF,GZ1OZ0,WSPD,BR,ISFFLX,DX,    &
                      SVP1,SVP2,SVP3,SVPT0,EP1,EP2,                 &
                      KARMAN,ch,qcg,                                &
                      itimestep,                                    &
@@ -420,7 +426,8 @@ CONTAINS
                                                               TSK, &
                                                            PSFCPA, &
                                                               QCG, &
-                                                            SNOWH
+                                                            SNOWH, &
+                                                         CHA_COEF    
 
       REAL,     DIMENSION( its:ite ), INTENT(IN)   ::     U1D,V1D, &
                                                         U1D2,V1D2, &
@@ -649,6 +656,11 @@ CONTAINS
                 !COARE 3.5
                 CALL edson_etal_2013(ZNT(i),UST(i),WSPD(i),visc,ZA(I))
              ENDIF
+          ELSEIF ( ISFTCFLX .EQ. 5 ) THEN
+! isftcflx=5 is for coupling with a wave model
+! varying charnock coefficient CHA_COEF from the wave model is used instead
+! of CZO in the computation of roughness length ZNT
+             ZNT(I)=CHA_COEF(I)*UST(I)*UST(I)/G + 0.11*1.5E-5/UST(I)
           ENDIF
        ELSE
           !DEFAULT TO COARE 3.0/3.5
@@ -678,22 +690,9 @@ CONTAINS
        !CALCULATE z_t and z_q
        !--------------------------------------
        IF ( PRESENT(ISFTCFLX) ) THEN
-          IF ( ISFTCFLX .EQ. 0 ) THEN
-             IF (COARE_OPT .EQ. 3.0) THEN
-                CALL fairall_etal_2003(z_t(i),z_q(i),restar,UST(i),visc,rstoch1D(i),spp_pbl)
-             ELSE
-                !presumably, this will be published soon, but hasn't yet
-                CALL fairall_etal_2014(z_t(i),z_q(i),restar,UST(i),visc,rstoch1D(i),spp_pbl)
-             ENDIF
-          ELSEIF ( ISFTCFLX .EQ. 1 ) THEN
-             IF (COARE_OPT .EQ. 3.0) THEN
-                CALL fairall_etal_2003(z_t(i),z_q(i),restar,UST(i),visc,rstoch1D(i),spp_pbl)
-             ELSE
-                CALL fairall_etal_2014(z_t(i),z_q(i),restar,UST(i),visc,rstoch1D(i),spp_pbl)
-             ENDIF
-          ELSEIF ( ISFTCFLX .EQ. 2 ) THEN
+          IF ( ISFTCFLX .EQ. 2 ) THEN
              CALL garratt_1992(z_t(i),z_q(i),ZNTstoch(i),restar,XLAND(I))
-          ELSEIF ( ISFTCFLX .EQ. 3 ) THEN
+          ELSE
              IF (COARE_OPT .EQ. 3.0) THEN
                 CALL fairall_etal_2003(z_t(i),z_q(i),restar,UST(i),visc,rstoch1D(i),spp_pbl)
              ELSE

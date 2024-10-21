@@ -500,7 +500,7 @@ CONTAINS
 !-- v10           diagnostic 10-m v component from surface layer
 !-- UOCE          sea surface zonal currents (m s-1)
 !-- VOCE          sea surface meridional currents (m s-1)
-!-- CHA_COEF      charnock coefficient from wave model ()
+!-- CHA_COEF      varying charnock coefficient (e.g. from wave model)
 !-- th2           diagnostic 2-m theta from surface layer and lsm
 !-- t2            diagnostic 2-m temperature from surface layer and lsm
 !-- q2            diagnostic 2-m mixing ratio from surface layer and lsm
@@ -2363,7 +2363,7 @@ CONTAINS
                cp,g,rcp,r_d,xlv,psfc,chs,chs2,cqs2,cpm,            &
                znt,ust,pblh,mavail,zol,mol,regime,psim,psih,       &
                xland,hfx,qfx,lh,tsk,flhc,flqc,qgh,qsfc,rmol,       &
-               u10,v10,th2,t2,q2,SNOWH,                            &
+               u10,v10,th2,t2,q2,SNOWH,CHA_COEF,                   &
                gz1oz0,wspd,br,isfflx,dx,                           &
                svp1,svp2,svp3,svpt0,ep_1,ep_2,karman,              &
                itimestep,ch,qcg,                                   &
@@ -2382,7 +2382,7 @@ CONTAINS
                cp,g,rcp,r_d,xlv,psfc,chs,chs2,cqs2,cpm,            &
                znt,ust,pblh,mavail,zol,mol,regime,psim,psih,       &
                xland,hfx,qfx,lh,tsk,flhc,flqc,qgh,qsfc,rmol,       &
-               u10,v10,th2,t2,q2,SNOWH,                            &
+               u10,v10,th2,t2,q2,SNOWH,CHA_COEF,                   &
                gz1oz0,wspd,br,isfflx,dx,                           &
                svp1,svp2,svp3,svpt0,ep_1,ep_2,karman,              &
                itimestep,ch,qcg,                                   &
@@ -5240,7 +5240,7 @@ CONTAINS
               CP,G,ROVCP,R,XLV,PSFC,CHS,CHS2,CQS2,CPM,             &
               ZNT,UST,PBLH,MAVAIL,ZOL,MOL,REGIME,PSIM,PSIH,        &
               XLAND,HFX,QFX,LH,TSK,FLHC,FLQC,QGH,QSFC,RMOL,        &
-              U10,V10,TH2,T2,Q2,SNOWH,                             &
+              U10,V10,TH2,T2,Q2,SNOWH,CHA_COEF,                    &
               GZ1OZ0,WSPD,BR,ISFFLX,DX,                            &
               SVP1,SVP2,SVP3,SVPT0,EP1,EP2,KARMAN,                 &
               &itimestep,ch,qcg,                                   &
@@ -5287,6 +5287,7 @@ CONTAINS
                                                              QCG, &
                                                             PSFC, &
                                                            SNOWH, &
+                                                        CHA_COEF, &
                                                              TSK
 
      REAL,     DIMENSION( ims:ime, jms:jme )                    , &
@@ -5422,7 +5423,7 @@ CONTAINS
           CP,G,ROVCP,R,XLV,PSFC,CHS,CHS2,CQS2,CPM,            &
           ZNT,UST,PBLH,MAVAIL,ZOL,MOL,REGIME,PSIM,PSIH,       &
           XLAND,HFX,QFX,LH,TSK_LOCAL,FLHC,FLQC,QGH,QSFC,RMOL, &
-          U10,V10,TH2,T2,Q2,SNOWH,                            &
+          U10,V10,TH2,T2,Q2,SNOWH,CHA_COEF,                   &
           GZ1OZ0,WSPD,BR,ISFFLX,DX,                           &
           SVP1,SVP2,SVP3,SVPT0,EP1,EP2,KARMAN,                &
           itimestep,ch,qcg,                                   &
@@ -5488,7 +5489,7 @@ CONTAINS
                TSK_SEA,                                            &
                FLHC_SEA,FLQC_SEA,QGH_SEA,QSFC_SEA,RMOL_SEA,        &
                U10_SEA,V10_SEA,TH2_SEA,T2_SEA,Q2_SEA,SNOWH,        &
-               GZ1OZ0_SEA,WSPD_SEA,BR_SEA,                         &
+               CHA_COEF,GZ1OZ0_SEA,WSPD_SEA,BR_SEA,                &
                ISFFLX,DX,                                          &
                SVP1,SVP2,SVP3,SVPT0,EP1,EP2,KARMAN,                &
                itimestep,CH_SEA,qcg,                               &
