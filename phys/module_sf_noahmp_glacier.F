@@ -1321,6 +1321,8 @@ contains
         QSFC = 0.622*(ESTG*RHSUR)/(SFCPRS-0.378*(ESTG*RHSUR))
 
      END DO loop3 ! end stability iteration
+
+     EVB = MAX(0., EVB)
 ! -----------------------------------------------------------------
 
 ! if snow on ground and TG > TFRZ: reset TG = TFRZ. reevaluate ground fluxes.

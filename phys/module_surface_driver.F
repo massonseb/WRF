@@ -3369,7 +3369,6 @@ CONTAINS
                         qz0(i,j)  = ( qz0(i,j)  * XICE(i,j) ) + ( (1.0-XICE(i,j)) * qz0_sea(i,j)  )
                         hfx(i,j)  = ( hfx_ice(i,j)  * XICE(i,j) ) + ( (1.0-XICE(i,j)) * hfx_sea(i,j)  )
                         qfx(i,j)  = ( qfx_ice(i,j)  * XICE(i,j) ) + ( (1.0-XICE(i,j)) * qfx_sea(i,j)  )
-                        lh_ice(i,j) = MAX( 0., lh_ice(i,j) )
                         lh(i,j)   = ( lh_ice(i,j)   * XICE(i,j) ) + ( (1.0-XICE(i,j)) * lh_sea(i,j)   )
                         znt(i,j)  = ( znt_ice(i,j)  * XICE(i,j) ) + ( (1.0-XICE(i,j)) * znt_sea(i,j)  )
                         TSK_ICE(i,j) = MIN( TSK_ICE(i,j), 273.15 )  ! Below 0°C
