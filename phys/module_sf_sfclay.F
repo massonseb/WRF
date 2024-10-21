@@ -52,7 +52,7 @@ CONTAINS
 !-- UST         u* in similarity theory (m/s)
 !-- USTM        u* in similarity theory (m/s) without vconv correction
 !               used to couple with TKE scheme
-!-- CHA_COEF    charnock coefficient from wave model
+!-- CHA_COEF    varying charnock coefficient (e.g. from wave model)
 !-- PBLH        PBL height from previous time (m)
 !-- MAVAIL      surface moisture availability (between 0 and 1)
 !-- ZOL         z/L height over Monin-Obukhov length
@@ -96,7 +96,10 @@ CONTAINS
 !-- cd          momentum exchange coeff at 10 meters
 !-- cka         enthalpy exchange coeff at the lowest model level
 !-- cda         momentum exchange coeff at the lowest model level
-!-- isftcflx    =0, (Charnock and Carlson-Boland); =1, AHW Ck, Cd, =2 Garratt
+!-- isftcflx    =0: constant charnock (0.0185) + zt & zq from COARE3.0 (default)
+!--             =1: Donelan Cd + zt & zq from const z0q 
+!--             =2: Donelan Cd + zt & zq from Garratt
+!--             =5: varying charnock coefficient (e.g. from a wave model) + zt & zq from COARE3.0
 !-- iz0tlnd     =0 Carlson-Boland, =1 Czil_new
 !-- ids         start index for i in domain
 !-- ide         end index for i in domain
@@ -865,11 +868,6 @@ CONTAINS
 ! varying charnock coefficient CHA_COEF from the wave model is used instead
 ! of CZO in the computation of roughness length ZNT
                 ZNT(I)=CHA_COEF(I)*UST(I)*UST(I)/G+0.11*1.5E-5/UST(I)
-             ELSEIF ( ISFTCFLX.EQ.6 ) THEN
-! isftcflx=6 is for saturating classical charnock coefficient
-! to a given level 
-                ZNT(I)=CZO*UST(I)*UST(I)/G+0.11*1.5E-5/UST(I)
-                ZNT(I)=MIN(ZNT(I),7.0e-3)
              ELSEIF ( ISFTCFLX.EQ.1 .OR. ISFTCFLX.EQ.2 ) THEN
 !               ZNT(I)=10.*exp(-9.*UST(I)**(-.3333))
 !               ZNT(I)=10.*exp(-9.5*UST(I)**(-.3333))
