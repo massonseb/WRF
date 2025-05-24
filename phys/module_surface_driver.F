@@ -1747,7 +1747,7 @@ CONTAINS
 
 #ifdef BPRC_MODS
 ! bai  20141023=================================================
-          LANDMASK(I,J)=1.
+!          LANDMASK(I,J)=1.
           LU_INDEX(I,J)=ISICE
           ALBBCK(I,J) = SEAICE_ALBEDO_DEFAULT
           SNOALB(I,J) = SEAICE_ALBEDO_DEFAULT
@@ -1793,6 +1793,7 @@ CONTAINS
           ENDIF
        ELSE
           XICE(I,J) = 0.0
+          XLAND(I,J) = 1. + ( 1. - LANDMASK(I,J) )   ! 1 over land ; 2 over ocean or seaice
        ENDIF
      IF (lakemodel.ne.1) then
          IF(XLAND(i,j) .GT. 1.5) THEN
@@ -1834,9 +1835,8 @@ CONTAINS
 #endif
     ENDIF  ! (lakemodel=1)
     
-        IF ( XLAND(i,j) .LT. 1.5 .AND. XICEM(I,J) .GE. XICE_THRESHOLD .AND. XICE(I,J) .LT. XICE_THRESHOLD ) THEN
+        IF ( XICE(I,J) .LT. XICE_THRESHOLD .AND. XLAND(I,J) .EQ. 2. )
 ! sea-ice point turns to water point
-          XLAND(I,J) = 2.
           IVGTYP(I,J) = ISWATER
           ISLTYP(I,J) = 14
           VEGFRA(I,J) = 0.
@@ -1850,7 +1850,7 @@ CONTAINS
           EMBCK(I,J)  = 0.98
 #ifdef BPRC_MODS
 ! bai 20141023====================================
-          LANDMASK(I,J)=0.
+!          LANDMASK(I,J)=0.
           LU_INDEX(I,J)=ISWATER
           SNOALB(I,J) = 0.08
 ! ================================================
