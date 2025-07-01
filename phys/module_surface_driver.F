@@ -1835,7 +1835,7 @@ CONTAINS
 #endif
     ENDIF  ! (lakemodel=1)
     
-        IF ( XICE(I,J) .LT. XICE_THRESHOLD .AND. XLAND(I,J) .EQ. 2. )
+        IF ( XICE(I,J) .LT. XICE_THRESHOLD .AND. XLAND(I,J) .EQ. 2. ) THEN
 ! sea-ice point turns to water point
           IVGTYP(I,J) = ISWATER
           ISLTYP(I,J) = 14
