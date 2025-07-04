@@ -1737,6 +1737,9 @@ CONTAINS
           endif 
 #endif
 ! end check lake model    
+
+        IF ( XICE(I,J) .GT. 0. .AND. LANDMASK(I,J) .EQ. 1. ) LANDMASK(I,J)=0.  ! make sure LANDMASK is properly defined
+
         IF ( XICE(I,J) .GE. XICE_THRESHOLD ) THEN
           ! water point is sea-ice point
           XLAND(I,J) = 1.
