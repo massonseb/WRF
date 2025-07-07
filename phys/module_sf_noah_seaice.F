@@ -1236,23 +1236,24 @@ CONTAINS
 ! CALCULATE TOTAL ROUGHNESS LENGTH OVER SNOW
 ! SNCOVR  FRACTIONAL SNOW COVER
 ! Z0      ROUGHNESS LENGTH (m)
-! Z0S     SNOW ROUGHNESS LENGTH:=0.001 (m)
+! Z0S     SNOW ROUGHNESS LENGTH:=0.00025 (0.25mm, see  https://doi.org/10.1007/s10546-011-9623-3  ) ! old value ==0.00025 ! 0.001 (m)
 ! ----------------------------------------------------------------------
       IMPLICIT NONE
       REAL, INTENT(IN)        :: SNCOVR, Z0BRD
       REAL, INTENT(OUT)       :: Z0
-      REAL, PARAMETER         :: Z0S=0.001
+      REAL, PARAMETER         :: Z0S=0.00025 ! 0.001
       REAL, INTENT(IN)        :: SNOWH
       REAL                    :: BURIAL
       REAL                    :: Z0EFF
 
 !m      Z0 = (1.- SNCOVR)* Z0BRD + SNCOVR * Z0S
       BURIAL = 7.0*Z0BRD - SNOWH
-      IF(BURIAL.LE.0.0007) THEN
-        Z0EFF = Z0S
-      ELSE      
-        Z0EFF = BURIAL/7.0
-      ENDIF
+!      IF(BURIAL.LE.0.0007) THEN
+!        Z0EFF = Z0S
+!      ELSE      
+!        Z0EFF = BURIAL/7.0
+!      ENDIF
+      Z0EFF = MAX( Z0S, BURIAL/7.0 )
       
       Z0 = (1.- SNCOVR)* Z0BRD + SNCOVR * Z0EFF
 
