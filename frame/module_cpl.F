@@ -91,24 +91,25 @@ CONTAINS
             sndname(jwrf,jext, 5) = clprefix//'SUBLIMATION'          ! send Sublimation over sea-ice           
             ! heat fluxes (positive downward)
             sndname(jwrf,jext, 6) = clprefix//'SURF_NET_SOLAR'       ! send net short wave flux at ground surface
-            sndname(jwrf,jext, 7) = clprefix//'SURF_NET_NON-SOLAR'   ! send net non-solar heat flux at ground surface
-            sndname(jwrf,jext, 8) = clprefix//'SURF_NET_NON-SOLAR_ICE'  ! send net non-solar heat flux at atmosphere-sea-ice interface
-            sndname(jwrf,jext, 9) = clprefix//'DQNON-SOLAR_DTEMP_ICE'   ! send net temperature derivative of non-solar heat flux at atmosphere-sea-ice interface
+            sndname(jwrf,jext, 7) = clprefix//'SURF_NET_SOLAR_ICE'   ! send net short wave flux at ground surface over sea ice
+            sndname(jwrf,jext, 8) = clprefix//'SURF_NET_NON-SOLAR'   ! send net non-solar heat flux at ground surface
+            sndname(jwrf,jext, 9) = clprefix//'SURF_NET_NON-SOLAR_ICE'  ! send net non-solar heat flux at atmosphere-sea-ice interface
+            sndname(jwrf,jext,10) = clprefix//'DQNON-SOLAR_DTEMP_ICE'   ! send net temperature derivative of non-solar heat flux at atmosphere-sea-ice interface
             ! momentum fluxes
-            sndname(jwrf,jext,10) = clprefix//'TAUX'           ! send zonal      wind tress at atmosphere-ocean/sea-ice interface
-            sndname(jwrf,jext,11) = clprefix//'TAUY'           ! send meridional wind tress at atmosphere-ocean/sea-ice interface
-            sndname(jwrf,jext,12) = clprefix//'TAUE'           ! send Eastward   wind tress at atmosphere-ocean/sea-ice interface
-            sndname(jwrf,jext,13) = clprefix//'TAUN'           ! send Northward  wind tress at atmosphere-ocean/sea-ice interface
-            sndname(jwrf,jext,14) = clprefix//'TAUX_OCE'       ! send zonal      wind tress at atmosphere-free-ocean interface
-            sndname(jwrf,jext,15) = clprefix//'TAUY_OCE'       ! send meridional wind tress at atmosphere-free-ocean interface
-            sndname(jwrf,jext,16) = clprefix//'TAUE_OCE'       ! send Eastward   wind tress at atmosphere-free-ocean interface
-            sndname(jwrf,jext,17) = clprefix//'TAUN_OCE'       ! send Northward  wind tress at atmosphere-free-ocean interface
-            sndname(jwrf,jext,18) = clprefix//'TAUX_ICE'       ! send zonal      wind tress at atmosphere-sea-ice interface
-            sndname(jwrf,jext,19) = clprefix//'TAUY_ICE'       ! send meridional wind tress at atmosphere-sea-ice interface
-            sndname(jwrf,jext,20) = clprefix//'TAUE_ICE'       ! send Eastward   wind tress at atmosphere-sea-ice interface
-            sndname(jwrf,jext,21) = clprefix//'TAUN_ICE'       ! send Northward  wind tress at atmosphere-sea-ice interface
-            sndname(jwrf,jext,22) = clprefix//'TAUMOD'         ! send the wind tress module at atmosphere-ocean/sea-ice interface
-            sndname(jwrf,jext,23) = clprefix//'TAUMOD_OCE'     ! send the wind tress module at atmosphere-ocean interface
+            sndname(jwrf,jext,11) = clprefix//'TAUX'           ! send zonal      wind tress at atmosphere-ocean/sea-ice interface
+            sndname(jwrf,jext,12) = clprefix//'TAUY'           ! send meridional wind tress at atmosphere-ocean/sea-ice interface
+            sndname(jwrf,jext,13) = clprefix//'TAUE'           ! send Eastward   wind tress at atmosphere-ocean/sea-ice interface
+            sndname(jwrf,jext,14) = clprefix//'TAUN'           ! send Northward  wind tress at atmosphere-ocean/sea-ice interface
+            sndname(jwrf,jext,15) = clprefix//'TAUX_OCE'       ! send zonal      wind tress at atmosphere-free-ocean interface
+            sndname(jwrf,jext,16) = clprefix//'TAUY_OCE'       ! send meridional wind tress at atmosphere-free-ocean interface
+            sndname(jwrf,jext,17) = clprefix//'TAUE_OCE'       ! send Eastward   wind tress at atmosphere-free-ocean interface
+            sndname(jwrf,jext,18) = clprefix//'TAUN_OCE'       ! send Northward  wind tress at atmosphere-free-ocean interface
+            sndname(jwrf,jext,19) = clprefix//'TAUX_ICE'       ! send zonal      wind tress at atmosphere-sea-ice interface
+            sndname(jwrf,jext,20) = clprefix//'TAUY_ICE'       ! send meridional wind tress at atmosphere-sea-ice interface
+            sndname(jwrf,jext,21) = clprefix//'TAUE_ICE'       ! send Eastward   wind tress at atmosphere-sea-ice interface
+            sndname(jwrf,jext,22) = clprefix//'TAUN_ICE'       ! send Northward  wind tress at atmosphere-sea-ice interface
+            sndname(jwrf,jext,23) = clprefix//'TAUMOD'         ! send the wind tress module at atmosphere-ocean/sea-ice interface
+            sndname(jwrf,jext,24) = clprefix//'TAUMOD_OCE'     ! send the wind tress module at atmosphere-ocean interface
          END DO
       END DO
       
@@ -415,6 +416,16 @@ CONTAINS
       lltosend(:) = cpl_tosend( grid%id, ifldid, max_edom )
       IF ( COUNT(lltosend) > 0 ) THEN 
          CALL cpl_sndfield( grid%id, lltosend, ifldid, grid%GSW(ips:ipe,jps:jpe) )
+      END IF
+
+      ! SURF_NET_SOLAR over sea ice: total net surface solar radiation over sea ice(W.m-2, positive downward)
+      !--------------------------------------------------------------------------------------------------
+      ifldid      = cpl_get_fldid( 'SURF_NET_SOLAR_ICE' )
+      lltosend(:) = cpl_tosend( grid%id, ifldid, max_edom )
+      IF ( COUNT(lltosend) > 0 ) THEN 
+         cplsnd(ips:ipe,jps:jpe) = grid%GSW(ips:ipe,jps:jpe) / ( 1. - grid%ALBEDO(ips:ipe,jps:jpe) )   &   ! net -> downward
+            &                                                * ( 1. - grid%ALBSI( ips:ipe,jps:jpe) )       ! downward -> net
+         CALL cpl_sndfield( grid%id, lltosend, ifldid, cplsnd )
       END IF
       
       ! SURF_NET_NON-SOLAR : total net surface non-solar heat flux (W.m-2, positive downward)
