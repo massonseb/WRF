@@ -125,7 +125,7 @@ contains
 
     INTEGER, INTENT (IN)      ::               SF_URBAN_PHYSICS
     REAL,    OPTIONAL, DIMENSION( ims:ime, kms:kme, jms:jme )  , &
-         &   INTENT (INOUT)   ::                        B_Q_BEP, &
+         &   INTENT (  OUT)   ::                        B_Q_BEP, &
          &                                              B_T_BEP
     REAL,    OPTIONAL, DIMENSION( ims:ime, kms:kme, jms:jme )  , &
          &   INTENT (IN)      ::                            RHO

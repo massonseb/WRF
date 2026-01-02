@@ -1066,7 +1066,7 @@ endif
                       grid%xlat,grid%xlong,grid%xlong_u,grid%xlat_v,grid%albedo,grid%albbck,grid%GMT,grid%JULYR,grid%JULDAY,     &
                       grid%levsiz, num_ozmixm, num_aerosolc, grid%paerlev,  &
                       grid%alevsiz, grid%no_src_types,                      &
-                      grid%tmn,grid%xland,grid%znt,grid%znt_sea,grid%znt_ice,grid%z0,grid%ust,grid%mol,grid%qsfc_ice,grid%pblh,grid%tke_pbl,    &
+                      grid%tmn,grid%xland,grid%znt,grid%znt_sea,grid%znt_ice,grid%z0,grid%ust,grid%mol,grid%qsfc_sea,grid%qsfc_ice,grid%pblh,grid%tke_pbl,    &
                       grid%exch_h,grid%thc,grid%snowc,grid%mavail,grid%hfx,grid%qfx,grid%rainbl, &
                       grid%tslb,grid%zs,grid%dzs,config_flags%num_soil_layers,grid%warm_rain,  &
                       grid%adv_moist_cond, grid%is_CAMMGMP_used,                               &
@@ -1280,6 +1280,38 @@ endif
                       ,grid%alevsiz_cu,grid%num_months,grid%no_src_types_cu,grid%aeromcu             &
                       ,grid%aeropcu,grid%EFCG,grid%EFCS,grid%EFIG,grid%EFIS,grid%EFSG,grid%EFSS      &
                       )
+     
+                     grid%TSKoce = grid%TSK
+                     grid%EMISSoce = grid%EMISS
+                     grid%ALBEDOoce = grid%ALBEDO
+                     grid%XLANDoce = grid%XLAND
+                     grid%ZNT_ICEoce = grid%ZNT_ICE
+                     grid%Z0oce = grid%Z0
+                     grid%USToce = grid%UST
+                     grid%MOLoce = grid%MOL
+                     grid%QSFC_SEAoce = grid%QSFC_SEA
+                     grid%QSFC_ICEoce = grid%QSFC_ICE
+                     grid%SNOWCoce = grid%SNOWC
+                     grid%HFXoce = grid%HFX
+                     grid%QFXoce = grid%QFX
+                     grid%TSLBoce = grid%TSLB
+                     grid%XICEoce = grid%XICE
+                     grid%XICEMoce = grid%XICEM
+                     grid%SNOWoce = grid%SNOW
+                     grid%SNOWHoce = grid%SNOWH
+                     grid%SNOALBoce = grid%SNOALB
+                     grid%UST_SEAoce = grid%UST_SEA
+                     grid%UST_ICEoce = grid%UST_ICE
+                     grid%USTM_SEAoce = grid%USTM_SEA
+                     grid%USTM_ICEoce = grid%USTM_ICE
+                     grid%MOL_SEAoce = grid%MOL_SEA
+                     grid%MOL_ICEoce = grid%MOL_ICE
+                     grid%HFX_SEAoce = grid%HFX_SEA
+                     grid%HFX_ICEoce = grid%HFX_ICE
+                     grid%QFX_SEAoce = grid%QFX_SEA
+                     grid%QFX_ICEoce = grid%QFX_ICE
+                     grid%MAVAILoce = grid%MAVAIL
+
        ENDDO ! loop of tiles for phy_init
 
        if(.not.grid%restart) then

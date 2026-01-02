@@ -565,19 +565,10 @@ CONTAINS
                 IF(XICE(I,J) == 1. .AND. IPRINT) PRINT *,' sea-ice at water point, I=',I,'J=',J
                 SMSTAV(I,J) = 1.0
                 SMSTOT(I,J) = 1.0
-                DO K = 1, NSOIL
-                   SMOIS(I,K,J) = 1.0
-                    TSLB(I,K,J) = 273.16
-                ENDDO
              ELSE
-! bai ==========================================================================
-               IF(XICE(I,J) == 1.) THEN        ! Sea-ice case
-! ===========================????===============================================
+               IF(XICE(I,J) >= XICE_THRES) THEN        ! Sea-ice case
                    SMSTAV(I,J) = 1.0
                    SMSTOT(I,J) = 1.0
-                   DO K = 1, NSOIL
-                      SMOIS(I,K,J) = 1.0
-                   ENDDO
                 ENDIF
              ENDIF
           ENDDO

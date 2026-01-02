@@ -76,7 +76,7 @@ CONTAINS
                          XLAT,XLONG,xlong_u,xlat_v,ALBEDO,ALBBCK,GMT,JULYR,JULDAY,&
                          levsiz, n_ozmixm, n_aerosolc, paerlev,  &
                          alevsiz, no_src_types,                  &
-                         TMN,XLAND,ZNT,ZNT_SEA,ZNT_ICE,Z0,UST,MOL,QSFC_ICE,PBLH,TKE_PBL,  &
+                         TMN,XLAND,ZNT,ZNT_SEA,ZNT_ICE,Z0,UST,MOL,QSFC_SEA,QSFC_ICE,PBLH,TKE_PBL,  &
                          EXCH_H,THC,SNOWC,MAVAIL,HFX,QFX,RAINBL, &
                          TSLB,ZS,DZS,num_soil_layers,warm_rain,  &
                          adv_moist_cond,is_CAMMGMP_used,         &
@@ -599,7 +599,7 @@ CONTAINS
              TML,T0ML,HML,H0ML,HUML,HVML,TMOML
 ! fractional seaice
    REAL,     DIMENSION( ims:ime , jms:jme ) , OPTIONAL, INTENT(INOUT) ::    &
-             TSK_SAVE,UST_SEA,UST_ICE,USTM_SEA,USTM_ICE,HFX_SEA,HFX_ICE,QFX_SEA,QFX_ICE,MOL_SEA,MOL_ICE,QSFC_ICE
+             TSK_SAVE,UST_SEA,UST_ICE,USTM_SEA,USTM_ICE,HFX_SEA,HFX_ICE,QFX_SEA,QFX_ICE,MOL_SEA,MOL_ICE,QSFC_SEA,QSFC_ICE
 !fdda
    REAL,     OPTIONAL, INTENT(IN) :: FGDT
    INTEGER , OPTIONAL, INTENT(OUT) :: STEPFG
@@ -1152,6 +1152,7 @@ CONTAINS
       MOL(i,j)=0.0
       MOL_SEA(i,j)=0.0
       MOL_ICE(i,j)=0.0
+      QSFC_SEA(i,j)=0.2
       QSFC_ICE(i,j)=0.2
       PBLH(i,j)=0.0
       HFX(i,j)=0.

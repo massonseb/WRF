@@ -81,6 +81,13 @@ CONTAINS
             rcvname(jwrf,jext, 7) = clprefix//'SEAICE_THICK'         ! receive sea-ice thickness
             rcvname(jwrf,jext, 8) = clprefix//'SEAICE_SNOWDEPTH'     ! receive sea-ice snow depth
             rcvname(jwrf,jext, 9) = clprefix//'SEAICE_ALBEDO'        ! receive sea-ice albedo
+            !
+            rcvname(jwrf,jext,10) = clprefix//'UICEoce'              ! receive sea-ice zonal      surface current 
+            rcvname(jwrf,jext,11) = clprefix//'VICEoce'              ! receive sea-ice meridional surface current 
+            rcvname(jwrf,jext,12) = clprefix//'SEAICE_COVERoce'      ! receive sea-ice cover (0 = no sea-ice to 1 = no free ocean)
+            rcvname(jwrf,jext,13) = clprefix//'SEAICE_THICKoce'      ! receive sea-ice thickness
+            rcvname(jwrf,jext,14) = clprefix//'SEAICE_SNOWDEPTHoce'  ! receive sea-ice snow depth
+            rcvname(jwrf,jext,15) = clprefix//'SEAICE_ALBEDOoce'     ! receive sea-ice albedo
             
             ! Variables that can be sent by WRF : see subroutine cpl_snd2 (below) for calculation details
             ! mass fluxes
@@ -391,7 +398,7 @@ CONTAINS
       ifldid      = cpl_get_fldid( 'TOTAL_EVAP' )
       lltosend(:) = cpl_tosend( grid%id, ifldid, max_edom )
       IF ( COUNT(lltosend) > 0 ) THEN 
-         CALL cpl_sndfield( grid%id, lltosend, ifldid, grid%QFX(ips:ipe,jps:jpe) )
+         CALL cpl_sndfield( grid%id, lltosend, ifldid, grid%QFXoce(ips:ipe,jps:jpe) )
       END IF
       
       ! EVAP - PRECIP : total net liquid+solide water fluw (kg/m2/s = mm/s, positive upward)
@@ -403,7 +410,7 @@ CONTAINS
          cplsnd(ips:ipe,jps:jpe) = grid%RAINCV( ips:ipe,jps:jpe) + grid%RAINNCV(ips:ipe,jps:jpe) &
             &                    + grid%SNOWNCV(ips:ipe,jps:jpe) + grid%HAILNCV(ips:ipe,jps:jpe) + grid%GRAUPELNCV(ips:ipe,jps:jpe)
          ! next, add evaporation
-         cplsnd(ips:ipe,jps:jpe) = grid%QFX(ips:ipe,jps:jpe) - cplsnd(ips:ipe,jps:jpe) / grid%DT
+         cplsnd(ips:ipe,jps:jpe) = grid%QFXoce(ips:ipe,jps:jpe) - cplsnd(ips:ipe,jps:jpe) / grid%DT
          CALL cpl_sndfield( grid%id, lltosend, ifldid, cplsnd )
       END IF
 
@@ -412,7 +419,7 @@ CONTAINS
       ifldid      = cpl_get_fldid( 'SUBLIMATION' )
       lltosend(:) = cpl_tosend( grid%id, ifldid, max_edom )
       IF ( COUNT(lltosend) > 0 ) THEN 
-         CALL cpl_sndfield( grid%id, lltosend, ifldid, grid%ESNOW(ips:ipe,jps:jpe) )   ! ESNOW is the positive part of QFX_ICE
+         CALL cpl_sndfield( grid%id, lltosend, ifldid, grid%ESNOWoce(ips:ipe,jps:jpe) )   ! ESNOW is the positive part of QFX_ICE
       END IF
 
       !
@@ -433,8 +440,8 @@ CONTAINS
       ifldid      = cpl_get_fldid( 'SURF_NET_SOLAR_ICE' )
       lltosend(:) = cpl_tosend( grid%id, ifldid, max_edom )
       IF ( COUNT(lltosend) > 0 ) THEN 
-         cplsnd(ips:ipe,jps:jpe) = grid%GSW(ips:ipe,jps:jpe) / ( 1. - grid%ALBEDO(ips:ipe,jps:jpe) )   &   ! net -> downward
-            &                                                * ( 1. - grid%ALBSI( ips:ipe,jps:jpe) )       ! downward -> net
+         cplsnd(ips:ipe,jps:jpe) = grid%GSW(ips:ipe,jps:jpe) / ( 1. - grid%ALBEDOoce(ips:ipe,jps:jpe) )   &   ! net -> downward
+            &                                                * ( 1. - grid%ALBSIoce( ips:ipe,jps:jpe) )       ! downward -> net
          CALL cpl_sndfield( grid%id, lltosend, ifldid, cplsnd )
       END IF
 
@@ -443,7 +450,7 @@ CONTAINS
       ifldid      = cpl_get_fldid( 'SURF_DNWD_SW' )
       lltosend(:) = cpl_tosend( grid%id, ifldid, max_edom )
       IF ( COUNT(lltosend) > 0 ) THEN 
-         cplsnd(ips:ipe,jps:jpe) = grid%GSW(ips:ipe,jps:jpe) / ( 1. - grid%ALBEDO(ips:ipe,jps:jpe) )   ! net -> downward
+         cplsnd(ips:ipe,jps:jpe) = grid%GSW(ips:ipe,jps:jpe) / ( 1. - grid%ALBEDOoce(ips:ipe,jps:jpe) )   ! net -> downward
          CALL cpl_sndfield( grid%id, lltosend, ifldid, cplsnd )
       END IF
       
@@ -462,13 +469,13 @@ CONTAINS
       lltosend(:) = cpl_tosend( grid%id, ifldid, max_edom )
       IF ( COUNT(lltosend) > 0 ) THEN   
          IF ( config_flags%fractional_seaice == 1 ) THEN   ! use the same emissivity for free ocean  and sea-ice
-            cplsnd(ips:ipe,jps:jpe) = - STBOLT * grid%EMISS(ips:ipe,jps:jpe)                                              &
-               &                        * (   grid%SST    (ips:ipe,jps:jpe)**4 * ( 1.0 - grid%XICE(ips:ipe,jps:jpe) )     &
-               &                            + grid%TSK_ICE(ips:ipe,jps:jpe)**4 *         grid%XICE(ips:ipe,jps:jpe)   )   &
-               &                      + grid%GLW(ips:ipe,jps:jpe) - grid%LH(ips:ipe,jps:jpe) - grid%HFX(ips:ipe,jps:jpe) 
+            cplsnd(ips:ipe,jps:jpe) = - STBOLT * grid%EMISSoce(ips:ipe,jps:jpe)                                              &
+               &                        * (   grid%SST       (ips:ipe,jps:jpe)**4 * ( 1.0 - grid%XICEoce(ips:ipe,jps:jpe) )     &
+               &                            + grid%TSK_ICEoce(ips:ipe,jps:jpe)**4 *         grid%XICEoce(ips:ipe,jps:jpe)   )   &
+               &                      + grid%GLW(ips:ipe,jps:jpe) - grid%LHoce(ips:ipe,jps:jpe) - grid%HFXoce(ips:ipe,jps:jpe) 
          ELSE
-            cplsnd(ips:ipe,jps:jpe) = - STBOLT * grid%EMISS(ips:ipe,jps:jpe) * grid%SST(ips:ipe,jps:jpe)**4  &
-               &                      + grid%GLW(ips:ipe,jps:jpe) - grid%LH(ips:ipe,jps:jpe) - grid%HFX(ips:ipe,jps:jpe) 
+            cplsnd(ips:ipe,jps:jpe) = - STBOLT * grid%EMISSoce(ips:ipe,jps:jpe) * grid%SST(ips:ipe,jps:jpe)**4  &
+               &                      + grid%GLW(ips:ipe,jps:jpe) - grid%LHoce(ips:ipe,jps:jpe) - grid%HFXoce(ips:ipe,jps:jpe) 
          END IF
          CALL cpl_sndfield( grid%id, lltosend, ifldid, cplsnd )
       END IF
@@ -479,8 +486,8 @@ CONTAINS
       ifldid      = cpl_get_fldid( 'SURF_NET_NON-SOLAR_ICE' )
       lltosend(:) = cpl_tosend( grid%id, ifldid, max_edom )
       IF ( COUNT(lltosend) > 0 ) THEN   
-         cplsnd(ips:ipe,jps:jpe) = - STBOLT * grid%EMISS(ips:ipe,jps:jpe) * grid%TSK_ICE(ips:ipe,jps:jpe)**4  &
-            &                      + grid%GLW(ips:ipe,jps:jpe) - grid%LH_ICE(ips:ipe,jps:jpe) - grid%HFX_ICE(ips:ipe,jps:jpe) 
+         cplsnd(ips:ipe,jps:jpe) = - STBOLT * grid%EMISSoce(ips:ipe,jps:jpe) * grid%TSK_ICEoce(ips:ipe,jps:jpe)**4  &
+            &                      + grid%GLW(ips:ipe,jps:jpe) - grid%LH_ICEoce(ips:ipe,jps:jpe) - grid%HFX_ICEoce(ips:ipe,jps:jpe) 
          CALL cpl_sndfield( grid%id, lltosend, ifldid, cplsnd )
       END IF
       !
@@ -489,7 +496,7 @@ CONTAINS
       ifldid      = cpl_get_fldid( 'DQNON-SOLAR_DTEMP_ICE' )
       lltosend(:) = cpl_tosend( grid%id, ifldid, max_edom )
       IF ( COUNT(lltosend) > 0 ) THEN 
-         CALL cpl_sndfield( grid%id, lltosend, ifldid, - grid%DQDTICE(ips:ipe,jps:jpe) )
+         CALL cpl_sndfield( grid%id, lltosend, ifldid, - grid%DQDTICEoce(ips:ipe,jps:jpe) )
       END IF
 
       !
@@ -513,7 +520,7 @@ CONTAINS
       icnt =        COUNT( cpl_tosend( grid%id, cpl_get_fldid( 'TAUMOD' ), max_edom ) )
       icnt = icnt + COUNT( cpl_tosend( grid%id, cpl_get_fldid( 'TAUX'   ), max_edom ) )
       IF ( icnt > 0 ) THEN 
-         taut(ips:ipe,jps:jpe) = grid%rho(ips:ipe,kps,jps:jpe) * grid%ust(ips:ipe,jps:jpe)**2
+         taut(ips:ipe,jps:jpe) = grid%rho(ips:ipe,kps,jps:jpe) * grid%ustoce(ips:ipe,jps:jpe)**2
       END IF
       
       icnt =        COUNT( cpl_tosend( grid%id, cpl_get_fldid( 'TAUX' ), max_edom ) )
@@ -545,7 +552,7 @@ CONTAINS
       icnt =        COUNT( cpl_tosend( grid%id, cpl_get_fldid( 'TAUMOD_OCE' ), max_edom ) )
       icnt = icnt + COUNT( cpl_tosend( grid%id, cpl_get_fldid( 'TAUX_OCE'   ), max_edom ) )
       IF ( icnt > 0 ) THEN 
-         taut(ips:ipe,jps:jpe) = grid%rho(ips:ipe,kps,jps:jpe) * grid%ust_sea(ips:ipe,jps:jpe)**2
+         taut(ips:ipe,jps:jpe) = grid%rho(ips:ipe,kps,jps:jpe) * grid%ust_seaoce(ips:ipe,jps:jpe)**2
       END IF
       
       icnt =        COUNT( cpl_tosend( grid%id, cpl_get_fldid( 'TAUX_OCE' ), max_edom ) )
@@ -580,7 +587,7 @@ CONTAINS
          u_ui(ips:ipe,jps:jpe) = grid%u_phy(ips:ipe,kps,jps:jpe) - grid%uice(ips:ipe,jps:jpe)
          v_vi(ips:ipe,jps:jpe) = grid%v_phy(ips:ipe,kps,jps:jpe) - grid%vice(ips:ipe,jps:jpe)
          wspd(ips:ipe,jps:jpe) = MAX( SQRT( u_ui(ips:ipe,jps:jpe)**2 + v_vi(ips:ipe,jps:jpe)**2 ), 1.e-7 )
-         taut(ips:ipe,jps:jpe) = grid%rho(ips:ipe,kps,jps:jpe) * grid%ust_ice(ips:ipe,jps:jpe)**2
+         taut(ips:ipe,jps:jpe) = grid%rho(ips:ipe,kps,jps:jpe) * grid%ust_iceoce(ips:ipe,jps:jpe)**2
          taui(ips:ipe,jps:jpe) = taut(ips:ipe,jps:jpe) * u_ui(ips:ipe,jps:jpe) / wspd(ips:ipe,jps:jpe)
          tauj(ips:ipe,jps:jpe) = taut(ips:ipe,jps:jpe) * v_vi(ips:ipe,jps:jpe) / wspd(ips:ipe,jps:jpe)
       END IF
@@ -671,7 +678,7 @@ CONTAINS
       &                ids, ide, jds, jde, kds, kde, &
       &                ims, ime, jms, jme, kms, kme, &
       &                ips, ipe, jps, jpe, kps, kpe, &
-      &                max_edom, pcplmask, pdatacpl, pdataobs )
+      &                max_edom, pcplmask, pdatacpl, pdataobs, pdatadefault )
       !!-------------------------------------------------------------------
       !!             ***  SUBROUTINE cpl_rcv  ***
       !!
@@ -686,6 +693,7 @@ CONTAINS
       REAL, DIMENSION( ims:ime, 1:max_edom, jms:jme ),           INTENT(IN   ) :: pcplmask    ! coupling mask
       REAL, DIMENSION( ims:ime,             jms:jme ),           INTENT(  OUT) :: pdatacpl    ! coupling data
       REAL, DIMENSION( ims:ime,             jms:jme ), OPTIONAL, INTENT(IN   ) :: pdataobs    ! observed data to be merged
+      REAL, DIMENSION( ims:ime,             jms:jme ), OPTIONAL, INTENT(IN   ) :: pdatadefault    ! observed data to be merged
       !
       INTEGER :: jext                                ! external domain index
       INTEGER :: ifldid                              ! field index
@@ -699,7 +707,12 @@ CONTAINS
       DO jext = 1, max_edom
          lltorcv = lltorcv .OR. cpl_toreceive( kdomwrf, jext, ifldid )
       END DO
-      IF( .not.lltorcv ) return
+      IF( .NOT.lltorcv ) THEN ! this variable is not coupled
+         WRITE(cltxt,*) 'this variable is not coupled: '//TRIM(cdsuffix)//', ',  PRESENT(pdatadefault)
+         CALL wrf_debug(nlevdbg, cltxt )
+         IF( PRESENT(pdatadefault) )   pdatacpl(ips:ipe,jps:jpe) = pdatadefault(ips:ipe,jps:jpe)
+         RETURN
+      ENDIF
          
       IF( PRESENT(pdataobs) ) THEN
          pdatacpl(ips:ipe,jps:jpe) = pdataobs(ips:ipe,jps:jpe) * ( 1.0 - SUM( pcplmask(ips:ipe,1:max_edom,jps:jpe), dim = 2 ) )

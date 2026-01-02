@@ -516,15 +516,17 @@ BENCH_START(surf_driver_tim)
      &        INFXSRT=grid%INFXSRT,  soldrain=grid%soldrain,              &
      &         ACGRDFLX=grid%acgrdflx  ,ACHFX=grid%achfx        ,ACLHF=grid%aclhf        &
      &        ,ACSNOM=grid%acsnom      ,ACSNOW=grid%acsnow      ,AKHS=grid%akhs          &
-     &        ,AKMS=grid%akms          ,ALBBCK=grid%albbck      ,ALBEDO=grid%albedo      &
+     &        ,AKMS=grid%akms          ,ALBBCK=grid%albbck      ,ALBEDO=grid%albedo,ALBEDOoce=grid%albedooce      &
      &        ,EMBCK=grid%embck                                                          &
-     &        ,BR=grid%br              ,CANWAT=grid%canwat      ,CHKLOWQ=chklowq    &
+     &        ,BR=grid%br,BRoce=grid%broce,CANWAT=grid%canwat      ,CHKLOWQ=chklowq    &
      &        ,CT=grid%ct              ,DT=grid%dt         ,DX=grid%dx              &
      &        ,DX2D=grid%dx2d          ,AREA2d=grid%area2d                          &
      &        ,DZ8W=dz8w          ,DZS=grid%dzs            ,FLHC=grid%flhc          &
      &        ,FM=grid%fm         ,FHH=grid%fh                                      &
      &        ,FLQC=grid%flqc          ,GLW=grid%glw            ,GRDFLX=grid%grdflx      &
-     &        ,GSW=grid%gsw    ,SWDOWN=grid%swdown        ,GZ1OZ0=gz1oz0      ,HFX=grid%hfx,HFX_SEA=grid%hfx_sea,  HFX_ICE=grid%hfx_ice            &
+     &        ,GSW=grid%gsw    ,SWDOWN=grid%swdown        ,GZ1OZ0=gz1oz0      &
+     &        ,HFX=grid%hfx,HFX_SEA=grid%hfx_sea,  HFX_ICE=grid%hfx_ice            &
+     &        ,HFXoce=grid%hfxoce,HFX_SEAoce=grid%hfx_seaoce,  HFX_ICEoce=grid%hfx_iceoce            &
      &        ,HT=grid%ht              ,IFSNOW=config_flags%ifsnow      ,ISFFLX=config_flags%isfflx      &
      &        ,FRACTIONAL_SEAICE=config_flags%fractional_seaice           &
      &        ,SEAICE_ALBEDO_OPT=config_flags%seaice_albedo_opt           &
@@ -547,14 +549,21 @@ BENCH_START(surf_driver_tim)
      &        ,IRR_START_JULIANDAY=config_flags%irr_start_julianday                                          &
      &        ,IRR_END_JULIANDAY=config_flags%irr_end_julianday                                              &
      &        ,IRR_FREQ=config_flags%irr_freq,IRR_PH=config_flags%irr_ph,IRR_RAND_FIELD=grid%irr_rand_field  & 
-     &        ,IVGTYP=grid%ivgtyp  ,LH=grid%lh, LH_SEA=grid%lh_sea, LH_ICE=grid%lh_ice  ,LOWLYR=grid%lowlyr      &
-     &        ,MAVAIL=grid%mavail      ,NUM_SOIL_LAYERS=config_flags%num_soil_layers        &
+     &        ,IVGTYP=grid%ivgtyp  &
+     &        ,LH=grid%lh, LH_SEA=grid%lh_sea, LH_ICE=grid%lh_ice  &
+     &        ,LHoce=grid%lhoce, LH_SEAoce=grid%lh_seaoce, LH_ICEoce=grid%lh_iceoce  &
+     &        ,LOWLYR=grid%lowlyr      &
+     &        ,MAVAIL=grid%mavail,MAVAILoce=grid%mavailoce      ,NUM_SOIL_LAYERS=config_flags%num_soil_layers        &
      &        ,P8W=grid%p_hyd_w            ,PBLH=grid%pblh          ,PI_PHY=pi_phy      &
      &        ,PSFC=grid%psfc          ,PSHLTR=grid%pshltr      ,PSIH=psih          &
      &        ,BLDT=grid%bldt     ,CURR_SECS=curr_secs, ADAPT_STEP_FLAG=adapt_step_flag  &
      &        ,BLDTACTTIME=grid%bldtacttime                                              & 
      &        ,PSIM=psim          ,P_PHY=grid%p_hyd        ,Q10=grid%q10            &
-     &        ,Q2=grid%q2   ,QFX=grid%qfx, QFX_SEA=grid%qfx_sea,QFX_ICE=grid%qfx_ice ,QSFC=grid%qsfc, QSFC_ICE=grid%qsfc_ice        &
+     &        ,Q2=grid%q2   &
+     &        ,QFX=grid%qfx, QFX_SEA=grid%qfx_sea,QFX_ICE=grid%qfx_ice &
+     &        ,QFXoce=grid%qfxoce, QFX_SEAoce=grid%qfx_seaoce,QFX_ICEoce=grid%qfx_iceoce &
+     &        ,QSFC=grid%qsfc, QSFC_SEA=grid%qsfc_sea, QSFC_ICE=grid%qsfc_ice        &
+     &        ,QSFCoce=grid%qsfcoce, QSFC_SEAoce=grid%qsfc_seaoce, QSFC_ICEoce=grid%qsfc_iceoce        &
      &        ,QSHLTR=grid%qshltr      ,QZ0=grid%qz0            ,RAINCV=grid%raincv      &
      &        ,RA_LW_PHYSICS=config_flags%ra_lw_physics         ,RHO=grid%rho            &
      &        ,RMOL=grid%rmol          ,SFCEVP=grid%sfcevp      ,SFCEXC=grid%sfcexc      &
@@ -564,8 +573,9 @@ BENCH_START(surf_driver_tim)
      &        ,BL_PBL_PHYSICS=config_flags%bl_pbl_physics                              &
      &        ,SF_SURFACE_PHYSICS=config_flags%sf_surface_physics  ,SH2O=grid%sh2o          &
      &        ,SHDMAX=grid%shdmax      ,SHDMIN=grid%shdmin      ,SMOIS=grid%smois        &
-     &        ,SMSTAV=grid%smstav      ,SMSTOT=grid%smstot      ,SNOALB=grid%snoalb      &
-     &        ,SNOW=grid%snow          ,SNOWC=grid%snowc        ,SNOWH=grid%snowh   ,ESNOW=grid%esnow     &
+     &        ,SMSTAV=grid%smstav      ,SMSTOT=grid%smstot      &
+     &        ,SNOALB=grid%snoalb      ,SNOW=grid%snow          ,SNOWC=grid%snowc        ,SNOWH=grid%snowh   ,ESNOW=grid%esnow     &
+     &        ,SNOALBoce=grid%snoalboce,SNOWoce=grid%snowoce    ,SNOWCoce=grid%snowcoce  ,SNOWHoce=grid%snowhoce,ESNOWoce=grid%esnowoce     &
      &        ,SMCREL=grid%smcrel                                                        &
      &        ,SST=grid%sst            ,SST_INPUT=grid%sst_input,SST_UPDATE=grid%sst_update                  &
      &        ,SSTSK=grid%sstsk        ,DTW=grid%dtw            ,SST_SKIN=grid%sst_skin  &
@@ -573,29 +583,34 @@ BENCH_START(surf_driver_tim)
      &        ,SCM_FORCE_FLUX=grid%scm_force_flux                                        &
      &        ,STEPBL=grid%stepbl      ,TH10=grid%th10          ,TH2=grid%th2            &
      &        ,THZ0=grid%thz0          ,TH_PHY=th_phy      ,TKE_PBL=grid%tke_pbl    &
-     &        ,TMN=grid%tmn            ,TSHLTR=grid%tshltr      ,TSK=grid%tsk ,TSK_ICE=grid%tsk_ice       &
+     &        ,TMN=grid%tmn            ,TSHLTR=grid%tshltr      &
+     &        ,TSK=grid%tsk            ,TSK_ICE=grid%tsk_ice    ,TSKoce=grid%tskoce  ,TSK_ICEoce=grid%tsk_iceoce       &
      &        ,TYR=grid%tyr            ,TYRA=grid%tyra          ,TDLY=grid%tdly          &
      &        ,TLAG=grid%tlag          ,LAGDAY=config_flags%lagday      ,NYEAR=grid%nyear        &
      &        ,NDAY=grid%nday          ,TMN_UPDATE=grid%tmn_update      ,YR=yr            &
-     &        ,TSLB=grid%tslb          ,T_PHY=t_phy        ,U10=grid%u10            &
+     &        ,TSLB=grid%tslb,TSLBoce=grid%tslboce          ,T_PHY=t_phy        ,U10=grid%u10            &
      &        ,URATX=grid%uratx        ,VRATX=grid%vratx   ,TRATX=grid%tratx        &
-     &        ,UDRUNOFF=grid%udrunoff  ,UST=grid%ust,UST_SEA=grid%ust_sea,UST_ICE=grid%ust_ice ,Uz0=grid%uz0            &
+     &        ,UDRUNOFF=grid%udrunoff  ,UST=grid%ust,UST_SEA=grid%ust_sea,UST_ICE=grid%ust_ice,USToce=grid%ustoce,UST_SEAoce=grid%ust_seaoce,UST_ICEoce=grid%ust_iceoce ,Uz0=grid%uz0            &
      &        ,U_FRAME=grid%u_frame    ,U_PHY=grid%u_phy   ,V10=grid%v10            &
      &        ,U10E=grid%u10e          ,V10E=grid%v10e                              &
-     &        ,UOCE=grid%uoce          ,VOCE=grid%voce,UICE=grid%uice  ,VICE=grid%vice   &
+     &        ,UOCE=grid%uoce          ,VOCE=grid%voce                              &
+     &        ,UICE=grid%uice          ,VICE=grid%vice     , UICEoce=grid%uiceoce, VICEoce=grid%viceoce   &
      &        ,VEGFRA=grid%vegfra      ,VZ0=grid%vz0       ,V_FRAME=grid%v_frame    &
      &        ,V_PHY=grid%v_phy        ,WARM_RAIN=grid%warm_rain                    &
-     &        ,WSPD=grid%wspd          ,XICE=grid%xice     ,XLAND=grid%xland        &
+     &        ,WSPD=grid%wspd          ,XICE=grid%xice,XLAND=grid%xland,xiceoce=grid%xiceoce,xlandoce=grid%xlandoce        &
 ! bai 20141023=======================================================================
      &        ,LANDMASK=grid%landmask  ,LU_INDEX=grid%lu_index                      &
 !====================================================================================
      &        ,MAX_EDOM=grid%num_ext_model_couple_dom      ,CPLMASK=grid%cplmask    &
-     &        ,Z0=grid%z0              ,Z=grid%z        ,ZNT=grid%znt,ZNT_SEA=grid%znt_sea,ZNT_ICE=grid%znt_ice               &
-     &        ,ZS=grid%zs              ,ALBSI=grid%albsi , ICEDEPTH=grid%icedepth   &
-     &        ,SNOWSI=grid%snowsi                                                   &
-     &        ,XICEM=grid%xicem   ,ISICE=grid%landuse_isice                         &
-     &        ,USTM=grid%ustm, USTM_SEA=grid%ustm_sea, USTM_ICE=grid%ustm_ice          ,CK=grid%ck         ,CKA=grid%cka            &
-     &                                 ,CD=grid%cd         ,CDA=grid%cda            &
+     &        ,Z0=grid%z0,Z0oce=grid%z0oce,Z=grid%z        ,ZNT=grid%znt,ZNT_SEA=grid%znt_sea,ZNT_ICE=grid%znt_ice,ZNT_ICEoce=grid%znt_iceoce  &
+     &        ,ZS=grid%zs  &
+     &        ,ALBSI=grid%albsi , ICEDEPTH=grid%icedepth,SNOWSI=grid%snowsi   &
+     &        ,ALBSIoce=grid%albsioce , ICEDEPTHoce=grid%icedepthoce,SNOWSIoce=grid%snowsioce   &
+     &        ,XICEM=grid%xicem,XICEMoce=grid%xicemoce,ISICE=grid%landuse_isice     &
+     &        ,USTM=grid%ustm, USTM_SEA=grid%ustm_sea, USTM_ICE=grid%ustm_ice   &
+     &        ,USTMoce=grid%ustmoce, USTM_SEAoce=grid%ustm_seaoce, USTM_ICEoce=grid%ustm_iceoce   &
+     &        ,CK=grid%ck         ,CKA=grid%cka            &
+     &        ,CD=grid%cd         ,CDA=grid%cda            &
      &        ,ISFTCFLX=config_flags%isftcflx, IZ0TLND=config_flags%iz0tlnd         &
      &        ,SF_OCEAN_PHYSICS=config_flags%sf_ocean_physics                       &
      &        ,OML_HML0=config_flags%oml_hml0 ,OML_GAMMA=config_flags%oml_gamma     &
@@ -916,7 +931,9 @@ BENCH_START(surf_driver_tim)
      &        ,QI_CURR=moist(ims,kms,jms,P_QI), F_QI=F_QI                 &
      &        ,QS_CURR=moist(ims,kms,jms,P_QS), F_QS=F_QS                 &
      &        ,QG_CURR=moist(ims,kms,jms,P_QG), F_QG=F_QG                 &
-     &        ,CAPG=grid%capg, EMISS=grid%emiss, HOL=hol,MOL=grid%mol, MOL_SEA=grid%mol_sea, MOL_ICE=grid%mol_ice     &
+     &        ,CAPG=grid%capg, EMISS=grid%emiss, EMISSoce=grid%emissoce, HOL=hol                  &
+     &        ,MOL=grid%mol, MOL_SEA=grid%mol_sea, MOL_ICE=grid%mol_ice     &
+     &        ,MOLoce=grid%moloce, MOL_SEAoce=grid%mol_seaoce, MOL_ICEoce=grid%mol_iceoce     &
      &        ,T2OBS=grid%t2obs, Q2OBS=grid%q2obs                         &
      &        ,RAINBL=grid%rainbl,SR=grid%sr,RAINSHV=grid%rainshv         &
      &        ,GRAUPELNCV=grid%graupelncv, HAILNCV=grid%hailncv           &
@@ -968,7 +985,7 @@ BENCH_START(surf_driver_tim)
      &        ,SDA_HFX=grid%SDA_HFX, SDA_QFX=grid%SDA_QFX,HFX_BOTH=grid%HFX_BOTH                        &  !fasdas
      &        ,QFX_BOTH=grid%QFX_BOTH,QNORM=grid%QNORM,fasdas=config_flags%fasdas                       &  !fasdas
      &        ,XLAIDYN=grid%XLAIDYN                                                                     &
-     &        ,DQDTICE=grid%dqdtice                                                                     &
+     &        ,DQDTICE=grid%dqdtice,DQDTICEoce=grid%dqdticeoce                                          &
      &        ,xice_input=grid%xice_input,icedepth_input=grid%icedepth_input                            &
      &        ,snowsi_input=grid%snowsi_input,albsi_input=grid%albsi_input                              &
      &        ,spp_lsm=config_flags%spp_lsm,pattern_spp_lsm=grid%pattern_spp_lsm     & !SPP

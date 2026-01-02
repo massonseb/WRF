@@ -57,7 +57,17 @@ CONTAINS
 !
 #include "actual_new_args.inc"
 !
-      )
+           )
+
+        grid%xiceoce = grid%xice
+        grid%snowoce = grid%snow
+        grid%snowcoce = grid%snowc
+        grid%snowhoce = grid%snowh
+        grid%snoalboce = grid%snoalb
+        grid%tskoce = grid%tsk
+        grid%tslboce = grid%tslb
+        grid%xlandoce = grid%xland
+        
    END SUBROUTINE init_domain
 
 !-------------------------------------------------------------------

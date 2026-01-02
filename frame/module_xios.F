@@ -23,7 +23,7 @@ MODULE module_xios
    INTEGER, PARAMETER :: nlevdbg0 = 0        ! verbosity level
    INTEGER, PARAMETER :: nlevdbg1 = 10       ! verbosity level
    INTEGER, PARAMETER :: nmaxvar = 1000      ! 
-   INTEGER, PARAMETER :: nlenvar = 32      ! 
+   INTEGER, PARAMETER :: nlenvar = 64      ! 
    INTEGER :: nmpi_comm_wrf       ! MPI communicator between the computing nodes
    INTEGER :: ncxt                ! context id currently used
    INTEGER :: nxiosuniq           ! counter used to define unique ids. 

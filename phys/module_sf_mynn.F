@@ -258,24 +258,28 @@ CONTAINS
                 INTENT(OUT)     ::                  ck,cka,cd,cda
 !
       REAL,     DIMENSION( ims:ime, jms:jme )                    , &
-                INTENT(INOUT)               ::             REGIME, &
+                INTENT(INOUT)               ::              &
                                                               HFX, &
                                                               QFX, &
-                                                               LH, &
-                                                         MOL,RMOL, &
-                                                        QSFC, QGH, &
-                                                              ZNT, &
-                                                              ZOL, &
+                                                              MOL, &
+                                                             QSFC, &
                                                               UST, &
+                                                             USTM
+      REAL,     DIMENSION( ims:ime, jms:jme )                    , &
+                INTENT(  OUT)               ::             REGIME, &
+                                                               LH, &
+                                                              ZOL, &
                                                               CPM, &
                                                              CHS2, &
                                                              CQS2, &
                                                               CHS, &
                                                                CH, &
+                                                             RMOL, &
                                                         FLHC,FLQC, &
                                                    GZ1OZ0,WSPD,BR, &
                                                         PSIM,PSIH, &
-                                                             USTM
+                                                              QGH, &
+                                                              ZNT
 
 !ADDITIONAL OUTPUT
       REAL,     DIMENSION( ims:ime, jms:jme )    ::   wstar,qstar
@@ -428,22 +432,27 @@ CONTAINS
                                                     dz8w1d,dz2w1d, &
                                                             RHO1D
 
-      REAL,     DIMENSION( ims:ime ), INTENT(INOUT) ::     REGIME, &
-                                                       HFX,QFX,LH, &
-                                                         MOL,RMOL, &
-                                                         QGH,QSFC, &
-                                                              ZNT, &
-                                                              ZOL, &
+      REAL,     DIMENSION( ims:ime ), INTENT(INOUT) ::      &
+                                                          HFX,QFX, &
+                                                              MOL, &
+                                                             QSFC, &
                                                               UST, &
-                                                              CPM, &
+                                                             USTM   
+      REAL,     DIMENSION( ims:ime ), INTENT(  OUT) ::     REGIME, &
+                                                               LH, &
+                                                              ZOL, &
                                                         CHS2,CQS2, &
                                                            CHS,CH, &
+                                                              CPM, &
+                                                             RMOL, &
+                                                        PSIM,PSIH, &
                                                         FLHC,FLQC, &
+                                                              QGH, &
                                                            GZ1OZ0, &
                                                              WSPD, &
                                                                BR, &
-                                                        PSIM,PSIH, &
-                                                             USTM   
+                                                              ZNT
+
       REAL,     DIMENSION( its:ite ), INTENT(IN)   ::     rstoch1D 
 
       ! DIAGNOSTIC OUTPUT
